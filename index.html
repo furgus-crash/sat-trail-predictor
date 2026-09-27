@@ -71,7 +71,7 @@ tr[data-clk]{cursor:pointer}
 <button class="sec" onclick="tryFetchTLE(true)">🔄 Force-refresh active TLEs</button>
 <span class="warn" id="tleStatus" style="align-self:center"></span>
 </div>
-<div class="warn">Fetch needs real internet on the host (Pi / GitHub Pages) and CelesTrak allowing cross-origin requests; if it fails, paste a TLE set manually. The full "active" catalog (~10,000+ objects incl. Starlink/OneWeb/Kuiper/Qianfan) is large — the app auto-coarsens the time step for big sets to stay responsive; a filtered CelesTrak group is faster if you don't need everything.</div>
+<div class="warn">Fetch needs real internet on the host (Pi / GitHub Pages) and CelesTrak allowing cross-origin requests; if it fails, paste a TLE set manually. With the full "active" catalog (~15,000+ objects) the app first does a fast coarse scan of every satellite, then re-samples only the ones that come near your target at 0.5s resolution for accurate trail shapes and entry/exit timing — so large catalogs stay responsive without losing accuracy on the satellites that matter. An extremely brief, fast-moving pass could in rare cases slip between coarse samples and go undetected entirely; a filtered CelesTrak group reduces that risk further if it matters for your session.</div>
 <div class="row"><button onclick="runSim()" style="flex:1">▶ Run Simulation</button></div>
 </div>
 
@@ -235,14 +235,12 @@ return minR<=0.5?'red':'orange';
 }
 const COLORS={green:'#34d399',orange:'#fbbf24',red:'#f87171'};
 
-function computeAllPasses(sats,tStart,tEnd,stepSec,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH){
-const observerGd={longitude:satellite.degreesToRadians(lonDeg),latitude:satellite.degreesToRadians(latDeg),height:0.3};
-const nSteps=Math.max(2,Math.floor((tEnd-tStart)/1000/stepSec));
+function sampleOne(s,observerGd,tStart,tEnd,stepSec,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH){
+const nSteps=Math.max(1,Math.round((tEnd-tStart)/1000/stepSec));
 const displayPasses=[],fovPasses=[];
-for(const s of sats){
 let dPts=[],fCur=null;
 for(let i=0;i<=nSteps;i++){
-const date=new Date(tStart.getTime()+i*stepSec*1000);
+const date=new Date(tStart+i*stepSec*1000);
 let inSky=false,inFov=false,x=0,y=0;
 try{
 const pv=satellite.propagate(s.satrec,date);
@@ -268,7 +266,29 @@ else if(fCur){fovPasses.push({name:s.name,satnum:s.satnum,tIn:fCur.pts[0].t,tOut
 }
 if(dPts.length) displayPasses.push({name:s.name,satnum:s.satnum,points:dPts,tIn:dPts[0].t,tOut:dPts[dPts.length-1].t,cls:classify(dPts,fovW,fovH)});
 if(fCur) fovPasses.push({name:s.name,satnum:s.satnum,tIn:fCur.pts[0].t,tOut:fCur.pts[fCur.pts.length-1].t,cls:classify(fCur.pts,fovW,fovH)});
+return {displayPasses,fovPasses};
 }
+
+function computeAllPasses(sats,tStart,tEnd,coarseStep,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,onProgress){
+const observerGd={longitude:satellite.degreesToRadians(lonDeg),latitude:satellite.degreesToRadians(latDeg),height:0.3};
+const FINE_STEP=0.5;
+const displayPasses=[],fovPasses=[];
+const t0=tStart.getTime(),t1=tEnd.getTime();
+sats.forEach((s,idx)=>{
+const coarse=sampleOne(s,observerGd,t0,t1,coarseStep,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH);
+if(coarse.displayPasses.length===0) return;
+coarse.displayPasses.forEach(cp=>{
+const rs=Math.max(t0,cp.tIn-coarseStep*1000);
+const re=Math.min(t1,cp.tOut+coarseStep*1000);
+const fine=sampleOne(s,observerGd,rs,re,FINE_STEP,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH);
+if(fine.displayPasses.length){
+fine.displayPasses.forEach(p=>displayPasses.push(p));
+fine.fovPasses.forEach(p=>fovPasses.push(p));
+}else{
+displayPasses.push(cp); // fallback: keep coarse point if refine somehow missed it
+}
+});
+});
 return {displayPasses,fovPasses};
 }
 
@@ -330,9 +350,11 @@ if(!(WIN_END>WIN_START)){alert('End time must be after start time');return;}
 const sats=parseTLEBlock(document.getElementById('tle').value);
 if(sats.length===0){alert('No valid TLE sets found — wait for the fetch, or paste at least one 3-line TLE set.');return;}
 const {raHr,decDeg}=altAzToRaDec(WIN_START,azDeg,altDeg,LAT,LON);
-let stepSec=Math.max(2,Math.min(15,expSec/4));
-if(sats.length>3000) stepSec=Math.max(stepSec,30);
-else if(sats.length>1000) stepSec=Math.max(stepSec,15);
+let stepSec=Math.max(2,Math.min(10,expSec/4));
+if(sats.length>6000) stepSec=Math.max(stepSec,15);
+else if(sats.length>2000) stepSec=Math.max(stepSec,8);
+// this is only a coarse detection pass now — any satellite it flags gets
+// re-sampled at 0.5s resolution below for accurate trails/timing
 const skyW=FOVW*SKY_FACTOR, skyH=FOVH*SKY_FACTOR;
 const superStart=new Date(WIN_START.getTime()-65*60000);
 const superEnd=new Date(WIN_END.getTime()+65*60000);
