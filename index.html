@@ -45,6 +45,10 @@ tr[data-clk]{cursor:pointer}
 <div><label>Longitude (°)</label><input id="lon" type="number" step="any" value="-5.57"></div>
 </div>
 <button class="sec" style="margin-top:8px" onclick="useGPS()">📍 Use current GPS</button>
+<div class="grid">
+<div><label>Common target (optional — Messier catalog; fills Az/Alt using session start time)</label><select id="catalogTarget" onchange="applyCatalogTarget()"><option value="">— manual entry —</option></select></div>
+<div></div>
+</div>
 <div class="grid" style="margin-top:10px">
 <div><label>Target Azimuth at start (°, 0-360, N=0)</label><input id="az" type="number" step="any" value="120"></div>
 <div><label>Target Altitude at start (°)</label><input id="alt" type="number" step="any" value="55"></div>
@@ -72,7 +76,13 @@ tr[data-clk]{cursor:pointer}
 <span class="warn" id="tleStatus" style="align-self:center"></span>
 </div>
 <div class="warn">Fetch needs real internet on the host (Pi / GitHub Pages) and CelesTrak allowing cross-origin requests; if it fails, paste a TLE set manually. With the full "active" catalog (~15,000+ objects) the app first does a fast coarse scan of every satellite, then re-samples only the ones that come near your target at 0.5s resolution for accurate trail shapes and entry/exit timing — so large catalogs stay responsive without losing accuracy on the satellites that matter. An extremely brief, fast-moving pass could in rare cases slip between coarse samples and go undetected entirely; a filtered CelesTrak group reduces that risk further if it matters for your session.</div>
-<div class="row"><button onclick="runSim()" style="flex:1">▶ Run Simulation</button></div>
+<div class="row"><button onclick="runSim()" style="flex:1" id="runBtn">▶ Run Simulation</button></div>
+<div id="progWrap" style="display:none;margin-top:8px">
+<div style="background:#0e1727;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:18px">
+<div id="progBar" style="background:var(--acc);height:100%;width:0%;transition:width .15s"></div>
+</div>
+<div class="warn" id="progText" style="margin-top:4px"></div>
+</div>
 </div>
 
 <div id="results" style="display:none">
@@ -80,7 +90,8 @@ tr[data-clk]{cursor:pointer}
 <div class="card">
 <canvas id="fov" width="640" height="420"></canvas>
 <div class="warn" id="fovCaption"></div>
-<div class="warn">🟩 near-miss (outside FOV) &nbsp; 🟧 crosses FOV &nbsp; 🟥 crosses through target core</div>
+<div class="warn" id="legend" style="cursor:pointer">🟩 <span data-cls="green" onclick="toggleClass('green')">near-miss (outside FOV)</span> &nbsp; 🟧 <span data-cls="orange" onclick="toggleClass('orange')">crosses FOV</span> &nbsp; 🟥 <span data-cls="red" onclick="toggleClass('red')">crosses through target core</span>
+<div class="warn">Tap a color to show/hide it · tap a satellite below to trace it as a dashed line</div></div>
 </div>
 
 <h2>3 · Exposure Efficiency</h2>
@@ -133,7 +144,28 @@ else{wrap.style.display='grid';document.getElementById('fovw').value=TELE[v].w;d
 }
 scopeChange();
 
+const MESSIER=[["M1",5.575,22.017],["M2",21.558,-0.817],["M3",13.703,28.383],["M4",16.393,-26.533],["M5",15.310,2.083],["M6",17.668,-32.217],["M7",17.898,-34.817],["M8",18.063,-24.383],["M9",17.320,-18.517],["M10",16.952,-4.100],["M11",18.852,-6.267],["M12",16.787,-1.950],["M13",16.695,36.467],["M14",17.627,-3.250],["M15",21.500,12.167],["M16",18.313,-13.783],["M17",18.347,-16.183],["M18",18.332,-17.133],["M19",17.043,-26.267],["M20",18.043,-23.033],["M21",18.077,-22.500],["M22",18.607,-23.900],["M23",17.947,-19.017],["M24",18.282,-18.483],["M25",18.527,-19.250],["M26",18.753,-9.400],["M27",19.993,22.717],["M28",18.408,-24.867],["M29",20.398,38.533],["M30",21.673,-23.183],["M31",0.712,41.267],["M32",0.712,40.867],["M33",1.565,30.650],["M34",2.700,42.783],["M35",6.150,24.350],["M36",5.602,34.133],["M37",5.873,32.550],["M38",5.478,35.833],["M39",21.537,48.433],["M40",12.373,58.083],["M41",6.767,-20.733],["M42",5.588,-5.383],["M43",5.592,-5.267],["M44",8.668,19.983],["M45",3.783,24.117],["M46",7.697,-14.817],["M47",7.610,-14.500],["M48",8.230,-5.800],["M49",12.492,8.000],["M50",7.053,-8.333],["M51",13.498,47.200],["M52",23.403,61.583],["M53",13.215,18.167],["M54",18.918,-30.483],["M55",19.667,-30.967],["M56",19.277,30.183],["M57",18.893,33.033],["M58",12.628,11.817],["M59",12.700,11.650],["M60",12.728,11.550],["M61",12.365,4.467],["M62",17.020,-30.117],["M63",13.263,42.033],["M64",12.945,21.683],["M65",11.315,13.083],["M66",11.338,12.983],["M67",8.855,11.817],["M68",12.658,-26.750],["M69",18.523,-32.350],["M70",18.720,-32.300],["M71",19.897,18.783],["M72",20.892,-12.533],["M73",20.982,-12.633],["M74",1.612,15.783],["M75",20.102,-21.917],["M76",1.707,51.567],["M77",2.712,-0.017],["M78",5.778,0.050],["M79",5.408,-24.550],["M80",16.283,-22.983],["M81",9.927,69.067],["M82",9.930,69.683],["M83",13.617,-29.867],["M84",12.418,12.883],["M85",12.423,18.183],["M86",12.437,12.950],["M87",12.513,12.400],["M88",12.533,14.417],["M89",12.595,12.550],["M90",12.613,13.167],["M91",12.590,14.500],["M92",17.285,43.133],["M93",7.743,-23.867],["M94",12.848,41.117],["M95",10.733,11.700],["M96",10.780,11.817],["M97",11.247,55.017],["M98",12.230,14.900],["M99",12.313,14.417],["M100",12.382,15.817],["M101",14.053,54.350],["M102",15.108,55.767],["M103",1.553,60.700],["M104",12.667,-11.617],["M105",10.797,12.583],["M106",12.317,47.300],["M107",16.542,-13.050],["M108",11.192,55.667],["M109",11.960,53.383],["M110",0.673,41.683]];
+function fillCatalogSelect(){
+const sel=document.getElementById('catalogTarget');
+MESSIER.forEach(([name])=>{const o=document.createElement('option');o.value=name;o.textContent=name;sel.appendChild(o);});
+}
+fillCatalogSelect();
+function applyCatalogTarget(){
+const name=document.getElementById('catalogTarget').value;
+if(!name) return;
+const obj=MESSIER.find(m=>m[0]===name);
+if(!obj) return;
+const start=new Date(document.getElementById('start').value);
+const lat=+document.getElementById('lat').value, lon=+document.getElementById('lon').value;
+const aa=targetAltAz(start,obj[1],obj[2],lat,lon);
+document.getElementById('az').value=aa.az.toFixed(2);
+document.getElementById('alt').value=aa.alt.toFixed(2);
+if(aa.alt<0) alert(name+' is below the horizon at your chosen session start time/location — az/alt filled anyway, but you may want to adjust the session time.');
+}
+
 let PASSES_DISPLAY=[],FOV_PASSES=[];
+let VISIBLE={green:true,orange:true,red:true};
+let HIGHLIGHT_SATNUM=null;
 let WIN_START,WIN_END,FOVW,FOVH,LAT,LON,TW,TH;
 let ACTIVE_START,ACTIVE_END,ACTIVE_EXP;
 
@@ -269,14 +301,16 @@ if(fCur) fovPasses.push({name:s.name,satnum:s.satnum,tIn:fCur.pts[0].t,tOut:fCur
 return {displayPasses,fovPasses};
 }
 
-function computeAllPasses(sats,tStart,tEnd,coarseStep,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,onProgress){
+async function computeAllPasses(sats,tStart,tEnd,coarseStep,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,onProgress){
 const observerGd={longitude:satellite.degreesToRadians(lonDeg),latitude:satellite.degreesToRadians(latDeg),height:0.3};
 const FINE_STEP=0.5;
 const displayPasses=[],fovPasses=[];
 const t0=tStart.getTime(),t1=tEnd.getTime();
-sats.forEach((s,idx)=>{
+const CHUNK=250;
+for(let idx=0;idx<sats.length;idx++){
+const s=sats[idx];
 const coarse=sampleOne(s,observerGd,t0,t1,coarseStep,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH);
-if(coarse.displayPasses.length===0) return;
+if(coarse.displayPasses.length){
 coarse.displayPasses.forEach(cp=>{
 const rs=Math.max(t0,cp.tIn-coarseStep*1000);
 const re=Math.min(t1,cp.tOut+coarseStep*1000);
@@ -285,10 +319,16 @@ if(fine.displayPasses.length){
 fine.displayPasses.forEach(p=>displayPasses.push(p));
 fine.fovPasses.forEach(p=>fovPasses.push(p));
 }else{
-displayPasses.push(cp); // fallback: keep coarse point if refine somehow missed it
+displayPasses.push(cp);
 }
 });
-});
+}
+if(idx%CHUNK===0){
+if(onProgress) onProgress(idx+1,sats.length);
+await new Promise(r=>setTimeout(r,0));
+}
+}
+if(onProgress) onProgress(sats.length,sats.length);
 return {displayPasses,fovPasses};
 }
 
@@ -313,14 +353,18 @@ for(let i=-2;i<=2;i++){const dv=(skyW/2)*(i/2);ctx.fillText((dv>=0?'+':'')+dv.to
 for(let i=-2;i<=2;i++){const dv=(skyH/2)*(i/2);ctx.fillText((dv>=0?'+':'')+dv.toFixed(1)+'°',2,toY(dv)+3);}
 let counts={green:0,orange:0,red:0};
 for(const p of passes){
+if(!VISIBLE[p.cls] && p.satnum!==HIGHLIGHT_SATNUM) continue;
 const pts=p.points.filter(pt=>pt.t>=rangeStart&&pt.t<=rangeEnd);
 if(pts.length<1) continue;
 counts[p.cls]++;
-ctx.strokeStyle=COLORS[p.cls];ctx.lineWidth=2;
+const isHi=p.satnum===HIGHLIGHT_SATNUM;
+ctx.strokeStyle=COLORS[p.cls];ctx.lineWidth=isHi?3:2;
+ctx.setLineDash(isHi?[6,4]:[]);
 ctx.beginPath();
 pts.forEach((pt,i)=>{const cx=toX(pt.x),cy=toY(pt.y); if(i===0)ctx.moveTo(cx,cy);else ctx.lineTo(cx,cy);});
 ctx.stroke();
 }
+ctx.setLineDash([]);
 ctx.fillStyle='#e6edf7';ctx.font='bold 14px sans-serif';
 ctx.fillText(`${counts.red+counts.orange+counts.green} trail(s) — ${counts.red} core, ${counts.orange} FOV, ${counts.green} near-miss`,8,18);
 }
@@ -337,7 +381,7 @@ if(hit) bad++;
 return {total,bad,pct:((total-bad)/total*100)};
 }
 
-function runSim(){
+async function runSim(){
 LAT=+document.getElementById('lat').value; LON=+document.getElementById('lon').value;
 const azDeg=+document.getElementById('az').value, altDeg=+document.getElementById('alt').value;
 const scope=document.getElementById('scope').value;
@@ -353,15 +397,27 @@ const {raHr,decDeg}=altAzToRaDec(WIN_START,azDeg,altDeg,LAT,LON);
 let stepSec=Math.max(2,Math.min(10,expSec/4));
 if(sats.length>6000) stepSec=Math.max(stepSec,15);
 else if(sats.length>2000) stepSec=Math.max(stepSec,8);
-// this is only a coarse detection pass now — any satellite it flags gets
-// re-sampled at 0.5s resolution below for accurate trails/timing
 const skyW=FOVW*SKY_FACTOR, skyH=FOVH*SKY_FACTOR;
 const superStart=new Date(WIN_START.getTime()-65*60000);
 const superEnd=new Date(WIN_END.getTime()+65*60000);
-const res=computeAllPasses(sats,superStart,superEnd,stepSec,LAT,LON,raHr,decDeg,FOVW,FOVH,skyW,skyH);
+
+const btn=document.getElementById('runBtn');
+btn.disabled=true; btn.textContent='Running…';
+document.getElementById('progWrap').style.display='block';
+const bar=document.getElementById('progBar'), txt=document.getElementById('progText');
+bar.style.width='0%'; txt.textContent='Starting…';
+
+const res=await computeAllPasses(sats,superStart,superEnd,stepSec,LAT,LON,raHr,decDeg,FOVW,FOVH,skyW,skyH,
+(done,total)=>{const pct=Math.round(done/total*100);bar.style.width=pct+'%';txt.textContent=`Scanning satellites: ${done.toLocaleString()} / ${total.toLocaleString()} (${pct}%)`;}
+);
 PASSES_DISPLAY=res.displayPasses; FOV_PASSES=res.fovPasses;
 
+btn.disabled=false; btn.textContent='▶ Run Simulation';
+document.getElementById('progWrap').style.display='none';
+
 ACTIVE_START=WIN_START.getTime(); ACTIVE_END=WIN_END.getTime(); ACTIVE_EXP=expSec;
+VISIBLE={green:true,orange:true,red:true}; HIGHLIGHT_SATNUM=null;
+updateLegendStyle();
 document.getElementById('results').style.display='block';
 const canvas=document.getElementById('fov');
 canvas.height=Math.round(canvas.width*skyH/skyW);
@@ -370,6 +426,21 @@ redrawAndStats();
 renderShiftTable();
 }
 
+function toggleClass(cls){
+VISIBLE[cls]=!VISIBLE[cls];
+updateLegendStyle();
+redrawAndStats();
+}
+function updateLegendStyle(){
+document.querySelectorAll('#legend span[data-cls]').forEach(el=>{
+el.style.opacity=VISIBLE[el.dataset.cls]?'1':'0.35';
+el.style.textDecoration=VISIBLE[el.dataset.cls]?'none':'line-through';
+});
+}
+function highlightSat(satnum){
+HIGHLIGHT_SATNUM=(HIGHLIGHT_SATNUM===satnum)?null:satnum;
+redrawAndStats();
+}
 function redrawAndStats(){
 const canvas=document.getElementById('fov');
 drawFOV(canvas,PASSES_DISPLAY,FOVW,FOVH,FOVW*SKY_FACTOR,FOVH*SKY_FACTOR,TW,TH,ACTIVE_START,ACTIVE_END);
@@ -422,7 +493,8 @@ function renderSatTable(){
 const inWin=FOV_PASSES.filter(p=>p.tIn<ACTIVE_END && p.tOut>ACTIVE_START);
 let html='<tr><th>Satellite</th><th>Enter FOV</th><th>Exit FOV</th><th>Duration</th></tr>';
 inWin.sort((a,b)=>a.tIn-b.tIn).forEach(p=>{
-html+=`<tr><td><span class="dot" style="background:${COLORS[p.cls]}"></span>${p.name}</td><td>${new Date(p.tIn).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${new Date(p.tOut).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${((p.tOut-p.tIn)/1000).toFixed(0)}s</td></tr>`;
+const hi=p.satnum===HIGHLIGHT_SATNUM?'hi':'';
+html+=`<tr class="${hi}" data-clk onclick="highlightSat(${p.satnum})"><td><span class="dot" style="background:${COLORS[p.cls]}"></span>${p.name}</td><td>${new Date(p.tIn).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${new Date(p.tOut).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${((p.tOut-p.tIn)/1000).toFixed(0)}s</td></tr>`;
 });
 document.getElementById('satTbl').innerHTML=html || '<tr><td>No satellites crossed the FOV in this window.</td></tr>';
 }
