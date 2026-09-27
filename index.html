@@ -151,21 +151,23 @@ try{
 setTLEStatus('Fetching...');
 const r=await fetch('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle');
 const t=await r.text();
-if(t.length<100) throw new Error('empty response');
+const count=parseTLEBlock(t).length;
+if(count===0) throw new Error('no valid TLE sets in response (likely a CelesTrak rate-limit or error message, not data)');
 document.getElementById('tle').value=t;
 try{localStorage.setItem('tleCacheData',t);localStorage.setItem('tleCacheTime',String(Date.now()));}catch(e){}
-setTLEStatus('Loaded '+Math.round(t.length/1024)+' KB just now.');
-}catch(e){setTLEStatus('Fetch failed (CORS/offline) — paste TLE data manually.');}
+setTLEStatus('Loaded '+count+' satellites ('+Math.round(t.length/1024)+' KB) just now.');
+}catch(e){setTLEStatus('Fetch failed: '+e.message+'. Try "Force-refresh" again in a bit, or paste TLE data manually.');}
 }
 
 function loadTLEOnStart(){
 try{
 const t=localStorage.getItem('tleCacheData'), ts=localStorage.getItem('tleCacheTime');
-if(t && ts && (Date.now()-Number(ts) < 24*3600*1000)){
+if(t && ts && (Date.now()-Number(ts) < 24*3600*1000) && parseTLEBlock(t).length>0){
 document.getElementById('tle').value=t;
-setTLEStatus('Using cached active-satellite TLEs from '+new Date(Number(ts)).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+'.');
+setTLEStatus('Using cached active-satellite TLEs ('+parseTLEBlock(t).length+' sats) from '+new Date(Number(ts)).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+'.');
 return;
 }
+try{localStorage.removeItem('tleCacheData');localStorage.removeItem('tleCacheTime');}catch(e){}
 }catch(e){}
 tryFetchTLE(false);
 }
