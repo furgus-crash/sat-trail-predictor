@@ -9,55 +9,121 @@
 <title>SatTrail Predictor</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js"></script>
 <style>
-:root{color-scheme:dark;--bg:#0b1220;--panel:#131c2e;--line:#233047;--txt:#e6edf7;--muted:#8ea0bd;--acc:#60a5fa;--bad:#f87171;--good:#34d399;--warn2:#fbbf24;}
+:root{color-scheme:dark;--ink:#070b14;--panel:#0d1424;--line:#1b2740;--line2:#2a3a5c;--txt:#dfe6f2;--muted:#8393b0;--acc:#8fb4ff;--accInk:#07121f;--bad:#f87171;--good:#34d399;--serif:ui-serif,"New York",Georgia,serif;--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,system-ui,sans-serif;padding:12px calc(12px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));padding-top:calc(12px + env(safe-area-inset-top));}
-h1{font-size:1.3rem;margin:4px 0 12px}
-h2{font-size:1rem;color:var(--acc);margin:18px 0 8px;border-top:1px solid var(--line);padding-top:14px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-label{font-size:.75rem;color:var(--muted);display:block;margin-bottom:2px}
-input,select{width:100%;background:#0e1727;border:1px solid var(--line);color:var(--txt);padding:8px;border-radius:8px;font-size:.9rem}
-textarea{width:100%;background:#0e1727;border:1px solid var(--line);color:var(--txt);padding:8px;border-radius:8px;font-size:.72rem;min-height:70px;font-family:monospace}
-button{background:var(--acc);color:#04101f;border:none;padding:10px 14px;border-radius:8px;font-weight:600;font-size:.9rem}
-button.sec{background:#233047;color:var(--txt)}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-canvas{width:100%;background:#000;border-radius:8px;display:block}
-table{width:100%;border-collapse:collapse;font-size:.76rem}
-th,td{padding:6px 4px;text-align:left;border-bottom:1px solid var(--line)}
-th{color:var(--muted);font-weight:600}
-tr.hi{background:#1c2a44}
-.stat{display:flex;justify-content:space-between;font-size:.95rem;padding:4px 0}
-.stat b{color:var(--good)}
-.warn{color:var(--muted);font-size:.7rem;line-height:1.4;margin-top:6px}
+html{-webkit-text-size-adjust:100%}
+body{margin:0 auto;max-width:980px;background:var(--ink);color:var(--txt);font-family:var(--sans);line-height:1.45;padding:calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+.mast h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;letter-spacing:-.01em;margin:0}
+.sub{color:var(--muted);margin:4px 0 22px;font-size:.95rem}
+h2{font-family:var(--serif);font-weight:500;font-size:1.3rem;margin:0 0 10px}
+h3{font-size:.8rem;font-weight:600;color:var(--muted);margin:0 0 8px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.grp{padding:14px 0;border-top:1px solid var(--line)}
+.grp.first{border-top:0;padding-top:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+label{font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px}
+input,select,textarea{width:100%;min-height:44px;background:#0a1120;border:1px solid #22304d;color:var(--txt);padding:10px 12px;border-radius:10px;font:inherit;font-size:.95rem}
+textarea{min-height:84px;font-family:ui-monospace,Menlo,monospace;font-size:.72rem}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button{font:inherit;font-weight:600;font-size:.92rem;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid transparent;background:var(--acc);color:var(--accInk);cursor:pointer;transition:transform .08s,opacity .15s}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.55}
+button.sec{background:transparent;border-color:var(--line2);color:var(--txt)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.run{width:100%;margin-top:16px;min-height:52px;font-size:1.02rem}
+.hint{color:var(--muted);font-size:.78rem;line-height:1.5;margin:6px 0 0}
+details{margin-top:10px;color:var(--muted);font-size:.78rem;line-height:1.5}
+summary{cursor:pointer;color:var(--txt)}
+.sec{margin-top:34px}
+canvas{width:100%;height:auto;display:block;border-radius:10px;background:#0b1220}
+#frameStrip{margin-top:14px;border-radius:6px}
+.count{margin:12px 0 10px;font-size:.9rem}
+.count b{font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:transparent;border:1px solid var(--line2);color:var(--txt);min-height:40px;padding:0 14px;display:inline-flex;align-items:center;gap:8px;font-weight:500;font-size:.85rem}
+.chip i{width:11px;height:11px;border-radius:50%;background:var(--c)}
+.chip.off{opacity:.4;text-decoration:line-through}
 .tblwrap{overflow-x:auto}
-.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+table{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600;font-size:.76rem}
 tr[data-clk]{cursor:pointer}
+tr[data-clk]:hover{background:#0f1830}
+tr.hi{background:#14203a;box-shadow:inset 3px 0 0 var(--acc)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+.hero{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.big{font-family:var(--serif);font-size:3.4rem;line-height:1;font-weight:500;font-variant-numeric:tabular-nums}
+.big span{font-size:1.5rem;color:var(--muted);margin-left:2px}
+.heroL{color:var(--muted)}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.kv div{border-top:1px solid var(--line);padding-top:8px}
+.kv small{display:block;color:var(--muted);font-size:.74rem}
+.kv b{font-size:1.15rem;font-variant-numeric:tabular-nums;font-weight:600}
+.kv b.bad{color:var(--bad)}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.kv{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.mast{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.guidebtn{flex:0 0 auto;min-height:40px;padding:0 16px}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.hd h2,.hd h3{margin:0}
+.help{flex:0 0 auto;width:32px;height:32px;min-height:0;padding:0;border-radius:50%;background:transparent;border:1px solid var(--line2);color:var(--muted);font-weight:600;font-size:.85rem}
+.help:hover{color:var(--txt);border-color:var(--acc)}
+.runrow{display:flex;gap:10px;margin-top:16px}
+.runrow .run{flex:1;width:auto;margin-top:0}
+.runrow .help{width:52px;height:52px;min-height:0;align-self:stretch;border-radius:12px}
+.guide{position:fixed;inset:0;z-index:50;background:var(--ink);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.guide[hidden]{display:none}
+.guide-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}
+.guide-head h2{margin:0}
+.guide-nav{display:flex;gap:8px;overflow-x:auto;padding:6px 16px 12px;border-bottom:1px solid var(--line);position:relative;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.guide-nav::-webkit-scrollbar{display:none}
+.guide-nav button{flex:0 0 auto;min-height:38px;padding:0 14px;background:transparent;border:1px solid var(--line2);color:var(--txt);font-weight:500;font-size:.85rem;border-radius:999px}
+.guide-nav button.on{background:var(--acc);color:var(--accInk);border-color:var(--acc)}
+.guide-body{flex:1;overflow-y:auto;position:relative;padding:8px 16px 60vh;-webkit-overflow-scrolling:touch}
+.guide-inner{max-width:720px;margin:0 auto}
+.gs{padding:20px 0;border-bottom:1px solid var(--line)}
+.gs h3{font-family:var(--serif);font-weight:500;font-size:1.25rem;color:var(--txt);margin:0 0 8px}
+.gs h4{font-size:.8rem;color:var(--muted);font-weight:600;margin:14px 0 4px}
+.gs p,.gs li{font-size:.95rem;line-height:1.6;color:#c9d3e6}
+.gs p{margin:6px 0}
+.gs ul,.gs ol{margin:6px 0;padding-left:20px}
+.gs code,.gs pre{font-family:ui-monospace,Menlo,monospace;background:#0a1120;border:1px solid var(--line);border-radius:8px;font-size:.78rem}
+.gs pre{padding:10px 12px;overflow-x:auto;color:#c9d3e6}
+.gs code{padding:1px 6px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.note{color:#fbbf24;font-size:.85rem;line-height:1.5;margin:0 0 10px}
+.note:empty{display:none}
 </style>
 </head>
 <body>
-<h1>🛰️ SatTrail Predictor</h1>
+<header class="mast">
+<div><h1>SatTrail</h1>
+<p class="sub">Find the cleanest window for your target before the satellites find you.</p></div>
+<button class="sec guidebtn" onclick="openGuide()" aria-haspopup="dialog">User guide</button>
+</header>
 
-<div class="card">
-<h2 style="margin-top:0;border:none;padding-top:0">1 · Session Setup</h2>
+<section class="panel">
+<div class="hd"><h2>Session</h2><button class="help" onclick="openGuide('g-start')" aria-label="Help: Quick start">?</button></div>
+<div class="grp first"><div class="hd"><h3>Location</h3><button class="help" onclick="openGuide('g-location')" aria-label="Help: Location">?</button></div>
 <div class="grid">
 <div><label>Latitude (°)</label><input id="lat" type="number" step="any" value="44.60"></div>
 <div><label>Longitude (°)</label><input id="lon" type="number" step="any" value="-5.57"></div>
 </div>
-<button class="sec" style="margin-top:8px" onclick="useGPS()">📍 Use current GPS</button>
+<div class="row"><button class="sec" onclick="useGPS()">Use current GPS</button></div>
+</div>
+<div class="grp"><div class="hd"><h3>Target</h3><button class="help" onclick="openGuide('g-target')" aria-label="Help: Target">?</button></div>
 <div class="grid">
-<div><label>Common target (optional — Messier catalog; fills Az/Alt using session start time)</label><select id="catalogTarget" onchange="applyCatalogTarget()"><option value="">— manual entry —</option></select></div>
-<div></div>
+<div class="full"><label>Common target (Messier) — fills azimuth and altitude for your session start</label><select id="catalogTarget" onchange="applyCatalogTarget()"><option value="">Manual entry</option></select></div>
+<div><label>Azimuth at start (°, N = 0)</label><input id="az" type="number" step="any" value="120"></div>
+<div><label>Altitude at start (°)</label><input id="alt" type="number" step="any" value="55"></div>
+<div><label>Target width (arcmin)</label><input id="tw" type="number" step="any" value="30"></div>
+<div><label>Target height (arcmin)</label><input id="th" type="number" step="any" value="20"></div>
 </div>
-<div class="grid" style="margin-top:10px">
-<div><label>Target Azimuth at start (°, 0-360, N=0)</label><input id="az" type="number" step="any" value="120"></div>
-<div><label>Target Altitude at start (°)</label><input id="alt" type="number" step="any" value="55"></div>
 </div>
-<div class="grid" style="margin-top:10px">
-<div><label>Target size — width (arcmin)</label><input id="tw" type="number" step="any" value="30"></div>
-<div><label>Target size — height (arcmin)</label><input id="th" type="number" step="any" value="20"></div>
-</div>
-<div class="grid" style="margin-top:10px">
+<div class="grp"><div class="hd"><h3>Telescope and exposure</h3><button class="help" onclick="openGuide('g-scope')" aria-label="Help: Telescope and exposure">?</button></div>
+<div class="grid">
 <div><label>Telescope</label><select id="scope" onchange="scopeChange()"></select></div>
 <div><label>Exposure</label><select id="exp"></select></div>
 </div>
@@ -65,46 +131,194 @@ tr[data-clk]{cursor:pointer}
 <div><label>FOV width (°)</label><input id="fovw" type="number" step="any" value="2.95"></div>
 <div><label>FOV height (°)</label><input id="fovh" type="number" step="any" value="1.66"></div>
 </div>
-<div class="grid" style="margin-top:10px">
+</div>
+<div class="grp"><div class="hd"><h3>Time window</h3><button class="help" onclick="openGuide('g-time')" aria-label="Help: Time window">?</button></div>
+<div class="grid">
 <div><label>Session start (local)</label><input id="start" type="datetime-local"></div>
 <div><label>Session end (local)</label><input id="end" type="datetime-local"></div>
 </div>
-<label style="margin-top:10px">TLE data (auto-loads CelesTrak "active" group once/day; edit or paste your own set)</label>
-<textarea id="tle" placeholder="Loading cached/active TLE set..."></textarea>
-<div class="row">
-<button class="sec" onclick="tryFetchTLE(true)">🔄 Force-refresh active TLEs</button>
-<span class="warn" id="tleStatus" style="align-self:center"></span>
 </div>
-<div class="warn">Fetch needs real internet on the host (Pi / GitHub Pages) and CelesTrak allowing cross-origin requests; if it fails, paste a TLE set manually. With the full "active" catalog (~15,000+ objects) the app first does a fast coarse scan of every satellite, then re-samples only the ones that come near your target at 0.5s resolution for accurate trail shapes and entry/exit timing — so large catalogs stay responsive without losing accuracy on the satellites that matter. An extremely brief, fast-moving pass could in rare cases slip between coarse samples and go undetected entirely; a filtered CelesTrak group reduces that risk further if it matters for your session.</div>
-<div class="row"><button onclick="runSim()" style="flex:1" id="runBtn">▶ Run Simulation</button></div>
-<div id="progWrap" style="display:none;margin-top:8px">
-<div style="background:#0e1727;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:18px">
-<div id="progBar" style="background:var(--acc);height:100%;width:0%;transition:width .15s"></div>
+<div class="grp"><div class="hd"><h3>Satellite data</h3><button class="help" onclick="openGuide('g-data')" aria-label="Help: Satellite data">?</button></div>
+<textarea id="tle" placeholder="Loading cached or fresh CelesTrak active-satellite data…"></textarea>
+<div class="row"><button class="sec" onclick="tryFetchTLE(true)">Refresh satellite data</button><span class="hint" id="tleStatus" style="margin:0"></span></div>
+<details><summary>How the satellite scan works</summary>
+Fetching needs internet and CelesTrak allowing the request; if it fails, paste a TLE set above. With the full active catalog (about 15,000 objects) the app first does a fast coarse scan of every satellite, then re-samples only the ones that come near your target at 0.5-second resolution for accurate trail shapes and entry/exit timing. In rare cases an extremely brief, fast pass could slip between coarse samples and go undetected; a filtered CelesTrak group reduces that risk.</details>
 </div>
-<div class="warn" id="progText" style="margin-top:4px"></div>
+<div class="runrow"><button class="run" id="runBtn" onclick="runSim()">Run simulation</button><button class="help" onclick="openGuide('g-run')" aria-label="Help: Running the simulation">?</button></div>
+<div id="progWrap" style="display:none;margin-top:10px">
+<div style="background:#0a1120;border:1px solid var(--line2);border-radius:8px;overflow:hidden;height:14px"><div id="progBar" style="background:var(--acc);height:100%;width:0%;transition:width .15s"></div></div>
+<div class="hint" id="progText"></div>
 </div>
-</div>
+</section>
 
 <div id="results" style="display:none">
-<h2>2 · Field-of-View Simulation</h2>
-<div class="card">
-<canvas id="fov" width="640" height="420"></canvas>
-<div class="warn" id="fovCaption"></div>
-<div class="warn" id="legend" style="cursor:pointer">🟩 <span data-cls="green" onclick="toggleClass('green')">near-miss (outside FOV)</span> &nbsp; 🟧 <span data-cls="orange" onclick="toggleClass('orange')">crosses FOV</span> &nbsp; 🟥 <span data-cls="red" onclick="toggleClass('red')">crosses through target core</span>
-<div class="warn">Tap a color to show/hide it · tap a satellite below to trace it as a dashed line</div></div>
+<section class="sec">
+<div class="hd"><h2>Sky view</h2><button class="help" onclick="openGuide('g-sky')" aria-label="Help: Sky view">?</button></div>
+<canvas id="fov" width="1280" height="700"></canvas>
+<div class="count" id="fovCount"></div>
+<p class="note" id="sunNote"></p>
+<div id="legend" class="legend">
+<button class="chip" data-cls="red" onclick="toggleClass('red')"><i style="--c:#f87171"></i>Through target</button>
+<button class="chip" data-cls="orange" onclick="toggleClass('orange')"><i style="--c:#fbbf24"></i>Across frame</button>
+<button class="chip" data-cls="green" onclick="toggleClass('green')"><i style="--c:#34d399"></i>Near-miss</button>
+</div>
+<p class="hint">Tap a color to hide it. Tap a satellite in the list below to trace it with a dashed line.</p>
+<p class="hint" id="fovCaption"></p>
+<canvas id="frameStrip" width="1280" height="56"></canvas>
+<p class="hint" id="frameCaption"></p>
+</section>
+
+<section class="sec"><div class="hd"><h2>Efficiency</h2><button class="help" onclick="openGuide('g-eff')" aria-label="Help: Efficiency">?</button></div><div id="effCard"></div></section>
+
+<section class="sec"><div class="hd"><h2>Start-time shift</h2><button class="help" onclick="openGuide('g-shift')" aria-label="Help: Start-time shift">?</button></div><p class="hint" style="margin:0 0 6px">Tap a row to see that window.</p><div class="tblwrap"><table id="shiftTbl"></table></div></section>
+
+<section class="sec"><div class="hd"><h2>Exposure length</h2><button class="help" onclick="openGuide('g-exp')" aria-label="Help: Exposure length">?</button></div><p class="hint" style="margin:0 0 6px">Tap a row to see how that sub length changes your rejected frames.</p><div class="tblwrap"><table id="expTbl"></table></div></section>
+
+<section class="sec"><div class="hd"><h2>Satellites in frame</h2><button class="help" onclick="openGuide('g-sats')" aria-label="Help: Satellites in frame">?</button></div><p class="hint" style="margin:0 0 6px">Tap a satellite to trace it on the sky view.</p><div class="tblwrap"><table id="satTbl"></table></div></section>
 </div>
 
-<h2>3 · Exposure Efficiency</h2>
-<div class="card" id="effCard"></div>
+<div id="guide" class="guide" hidden role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+<div class="guide-head"><h2 id="guideTitle">User guide</h2><button class="sec" onclick="closeGuide()">Close</button></div>
+<nav class="guide-nav" id="guideNav" aria-label="Guide sections">
+<button data-t="g-start" onclick="guideGo('g-start')">Quick start</button>
+<button data-t="g-location" onclick="guideGo('g-location')">Location</button>
+<button data-t="g-target" onclick="guideGo('g-target')">Target</button>
+<button data-t="g-scope" onclick="guideGo('g-scope')">Telescope</button>
+<button data-t="g-time" onclick="guideGo('g-time')">Time window</button>
+<button data-t="g-data" onclick="guideGo('g-data')">Satellite data</button>
+<button data-t="g-run" onclick="guideGo('g-run')">Running</button>
+<button data-t="g-sky" onclick="guideGo('g-sky')">Sky view</button>
+<button data-t="g-eff" onclick="guideGo('g-eff')">Efficiency</button>
+<button data-t="g-shift" onclick="guideGo('g-shift')">Start-time shift</button>
+<button data-t="g-exp" onclick="guideGo('g-exp')">Exposure length</button>
+<button data-t="g-sats" onclick="guideGo('g-sats')">Satellite list</button>
+<button data-t="g-limits" onclick="guideGo('g-limits')">Limits</button>
+</nav>
+<div class="guide-body" id="guideBody"><div class="guide-inner">
 
-<h2>4 · Start-Time Shift Optimization (±60 min, tap a row)</h2>
-<div class="card tblwrap"><table id="shiftTbl"></table></div>
+<section class="gs" id="g-start"><h3>Quick start</h3>
+<p>SatTrail predicts which satellites will cross your telescope's field of view during an imaging session. It shows how many sub-exposures they would spoil, and whether a different start time or exposure length would do better.</p>
+<ol>
+<li>Enter your location, target, telescope, exposure and session times.</li>
+<li>Check that the satellite data box holds orbit data. It fills in by itself.</li>
+<li>Tap <b>Run simulation</b> and wait for the progress bar to finish.</li>
+<li>Read the sky view and efficiency, then tap rows in the tables to compare other start times and exposure lengths.</li>
+</ol>
+<p>Tap the <b>?</b> beside any heading to jump to help for that part.</p></section>
 
-<h2>5a · Exposure-Length Comparison (tap a row)</h2>
-<div class="card tblwrap"><table id="expTbl"></table></div>
+<section class="gs" id="g-location"><h3>Location</h3>
+<h4>What to enter</h4>
+<p>Latitude and longitude in decimal degrees. North latitudes and east longitudes are positive; south and west are negative. Example: <code>42.60</code> and <code>-5.57</code>. Or tap <b>Use current GPS</b> and allow location access when your iPad asks.</p>
+<h4>What the app does</h4>
+<p>It uses your position to work out where every satellite and your target appear in your sky. Being off by a few hundred meters makes no practical difference. A Wi-Fi-only iPad estimates its position from the network and can be off by more, so type the coordinates of your observing spot if you know them. Height above sea level isn't needed.</p></section>
 
-<h2>5b · Satellites Crossing FOV (current scenario)</h2>
-<div class="card tblwrap"><table id="satTbl"></table></div>
+<section class="gs" id="g-target"><h3>Target</h3>
+<h4>What to enter</h4>
+<ul>
+<li><b>Common target:</b> pick a Messier object and the app fills in azimuth and altitude for you. Leave it on Manual entry to type your own values.</li>
+<li><b>Azimuth:</b> 0 to 360 degrees, measured clockwise from north. 0 is north, 90 east, 180 south, 270 west.</li>
+<li><b>Altitude:</b> degrees above the horizon, from 0 at the horizon to 90 straight overhead.</li>
+<li><b>Target width and height:</b> the object's apparent size in arcminutes (60 arcminutes is 1 degree). Rough examples: Orion Nebula 85 by 60, M13 20 by 20, Andromeda 190 by 60.</li>
+</ul>
+<p>Azimuth and altitude are the target's position at the moment your session starts. A planetarium app or your telescope's app will show them for any object.</p>
+<h4>What the app does</h4>
+<p>Picking a Messier object works out its azimuth and altitude for the location and start time currently entered, so set those first. If you change either afterwards, pick the object again. If it sits below the horizon at your start time, the app tells you.</p>
+<p>The app then turns your azimuth and altitude into a fixed spot among the stars and assumes your mount keeps tracking that spot for the whole session. The target stays centered while the sky turns around it. Width and height only size the gray oval on the sky view; they don't change any results.</p></section>
+
+<section class="gs" id="g-scope"><h3>Telescope and exposure</h3>
+<h4>What to enter</h4>
+<p>Choose your telescope. The field-of-view boxes fill in with the published width and height in degrees, rounded. They stay editable: choose <b>Custom</b> or change the numbers if you use a different lens, mode or crop. If your telescope's own app reports a different field of view, trust the app and enter it here.</p>
+<p>Choose an exposure from 10 seconds to 5 minutes. This is the length of one sub-exposure.</p>
+<h4>What the app does</h4>
+<p>The width is treated as the horizontal side of your picture and the height as the vertical side, with the camera level to the horizon. The app splits your session into back-to-back frames of your exposure length. A frame counts as rejected if any satellite is inside your field of view at any moment while that frame is exposing.</p>
+<p>You can change the exposure after a run by tapping a row in the Exposure length table. There's no need to run again.</p></section>
+
+<section class="gs" id="g-time"><h3>Time window</h3>
+<h4>What to enter</h4>
+<p>The start and end of the imaging session, using the date and time controls. Times are in your iPad's local time zone. The end must be after the start. Use the window you actually plan to shoot rather than the whole night, and pick times after dark: the app warns you when the Sun is up or the sky is still in twilight.</p>
+<h4>What the app does</h4>
+<p>It simulates exactly that window. It also looks 65 minutes before and after so the start-time shift table has data to compare. Only whole frames count; any leftover time shorter than one exposure is ignored. Longer windows take longer to compute.</p></section>
+
+<section class="gs" id="g-data"><h3>Satellite data</h3>
+<h4>What it is</h4>
+<p>Orbit data, called TLEs, lets the app calculate where each satellite is at any moment. The box fills automatically with CelesTrak's list of active satellites, about 15,000 objects including Starlink, OneWeb, Kuiper and Qianfan. It downloads once a day and the app remembers it in your browser. <b>Refresh satellite data</b> forces a new download. The line beside the button says what happened.</p>
+<h4>Format if you paste your own</h4>
+<p>Three lines per satellite: a name, then a line starting with <code>1 </code> and a line starting with <code>2 </code>. Blank lines are ignored, and you can paste any number of satellites. Fewer satellites run faster.</p>
+<pre>SATELLITE NAME
+1 NNNNNU ...
+2 NNNNN ...</pre>
+<h4>If the download fails</h4>
+<p>You may be offline, or the request may be blocked. The status line says so and your existing data stays in the box. CelesTrak only updates its data every two hours, so refreshing more often returns a notice instead of data; the app recognizes that and keeps what you have. You can also paste data from celestrak.org. Orbits change over time, so data older than about a week gets less reliable. Refresh before an important session.</p></section>
+
+<section class="gs" id="g-run"><h3>Running the simulation</h3>
+<h4>What happens</h4>
+<p>Tap <b>Run simulation</b>. The app checks every satellite in the data box in two passes. A quick coarse scan finds satellites that come near your target. Then a fine check at half-second steps measures the paths and timing of just those. The progress bar shows how many satellites are done. With the full list this can take a minute or more, so keep the page open.</p>
+<p>Only satellites above your horizon and lit by the Sun are counted. A satellite inside Earth's shadow leaves no streak, so the app skips it. Results appear below when the scan finishes. If you change the location, target, telescope, time window or satellite data, run again. Tapping table rows doesn't need a new run.</p></section>
+
+<section class="gs" id="g-sky"><h3>Sky view</h3>
+<h4>What you're seeing</h4>
+<p>A patch of sky centered on your target, 2.4 times wider and taller than your field of view. The scales run along the border: the horizontal scale is azimuth offset from the target and the vertical scale is altitude offset, both in degrees.</p>
+<ul>
+<li>The <b>blue rectangle</b> is your telescope's field of view, in true proportion for the scope you chose.</li>
+<li>The <b>gray oval</b> is your target's approximate size and position.</li>
+<li>Each <b>line</b> is one sunlit satellite's path across this patch during the time window shown. If a satellite drops into Earth's shadow partway across, its line stops there.</li>
+</ul>
+<p><span class="sw" style="background:#f87171"></span><b>Red:</b> passes through the central area of your frame, the inner half in each direction, where your target usually sits.<br>
+<span class="sw" style="background:#fbbf24"></span><b>Orange:</b> crosses your frame but stays out of the center.<br>
+<span class="sw" style="background:#34d399"></span><b>Green:</b> passes near but never enters your frame.</p>
+<p>The line under the picture counts the trails and states how many frames are rejected at the current exposure. Only red and orange trails reject frames. An amber note appears below the count when the Sun is above your horizon, or the sky is still in twilight, during the window shown.</p>
+<h4>What you can tap</h4>
+<ul>
+<li><b>Color buttons:</b> hide or show a color. Hide green to see only the trails that spoil frames.</li>
+<li><b>A row in the Start-time shift table:</b> the picture switches to that shifted window.</li>
+<li><b>A satellite in the Satellites in frame list:</b> that trail becomes a thick dashed line with its name.</li>
+<li><b>A row in the Exposure length table:</b> the counts and frame map update. The paths stay the same, because the same satellites cross whatever your exposure is.</li>
+</ul>
+<h4>Frame map</h4>
+<p>The colored strip under the picture has one bar for each sub-exposure in the window. Green frames are kept and red frames are rejected. It redraws whenever you change the exposure or the start time.</p></section>
+
+<section class="gs" id="g-eff"><h3>Efficiency</h3>
+<h4>What you're seeing</h4>
+<p>The large percentage is the share of your frames that stay free of satellite trails. Because every frame is the same length, it's also the share of your exposure time you keep. It's green at 90% or more, amber from 75% to 90%, and red below 75%.</p>
+<ul>
+<li><b>Session:</b> length of the window being shown.</li>
+<li><b>Sub-exposure:</b> the exposure length in use.</li>
+<li><b>Frames:</b> how many whole frames fit in the window.</li>
+<li><b>Rejected:</b> frames during which a satellite was inside your field of view. Near-misses don't count.</li>
+</ul>
+<p>The numbers always describe the scenario currently selected in the tables below: the start time and the exposure you tapped last.</p></section>
+
+<section class="gs" id="g-shift"><h3>Start-time shift</h3>
+<h4>What you're seeing</h4>
+<p>Nine rows answer "what if I started earlier or later?" They run from 60 minutes earlier to 60 minutes later in 15-minute steps, and each keeps your session length. Columns show the shift, the new start time, the frames, the rejected frames and the efficiency. Rows are always measured from the start time you entered, using the exposure currently selected.</p>
+<h4>What you can tap</h4>
+<p>Tap a row to load that window. The sky view, frame map, efficiency, exposure table and satellite list all update, and the highlighted row shows which window is active. Tap the <b>0 min</b> row to return to your original plan.</p>
+<p>The table doesn't check whether your target is still high enough at the shifted time. Confirm that in your planetarium app before you move your session.</p></section>
+
+<section class="gs" id="g-exp"><h3>Exposure length</h3>
+<h4>What you're seeing</h4>
+<p>Eleven rows from 10 seconds to 5 minutes, calculated for the window currently selected. Columns show the exposure, the frames, the rejected frames and the efficiency.</p>
+<h4>What you can tap</h4>
+<p>Tap a row to switch to that exposure. The efficiency, the count line, the frame map and the start-time shift table all update. A longer exposure is more likely to catch a satellite and loses more each time, so efficiency usually falls as exposure grows. Shorter subs lose less per hit but give you more frames to store and stack. Balance the table against what your camera needs, such as signal per sub and stacking time.</p></section>
+
+<section class="gs" id="g-sats"><h3>Satellites in frame</h3>
+<h4>What you're seeing</h4>
+<p>Every satellite that enters your field of view during the window shown, in time order. Columns show the name, when it enters, when it leaves (your iPad's local time) and how many seconds it stays inside. The dot color matches the sky view. Near-misses aren't listed.</p>
+<h4>What you can tap</h4>
+<p>Tap a satellite to trace it on the sky view as a thick dashed line with its name beside it. Tap it again to clear the highlight. Use the times to know when to expect rejected frames.</p></section>
+
+<section class="gs" id="g-limits"><h3>What the app doesn't do</h3>
+<ul>
+<li><b>Sunlight:</b> only satellites lit by the Sun are counted, using a simple model of Earth's shadow. A satellite at the very edge of the shadow can be off by a few seconds. The app doesn't decide whether your sky is dark enough to image; it warns you when the Sun is up or the sky is in twilight.</li>
+<li><b>Brightness:</b> it doesn't judge whether a faint satellite would show in your subs.</li>
+<li><b>Field rotation:</b> it assumes the camera stays level to the horizon and doesn't rotate during the session. Real rotation depends on your mount.</li>
+<li><b>Tracking:</b> it assumes perfect tracking of your target.</li>
+<li><b>Very fast passes:</b> rarely, an extremely brief pass can slip between the coarse scan steps and go undetected.</li>
+<li><b>Orbit accuracy:</b> satellites maneuver and orbits drift, so older data is less reliable.</li>
+<li><b>Field of view:</b> the telescope sizes are rounded published values.</li>
+</ul></section>
+
+</div></div>
 </div>
 
 <script>
@@ -145,9 +359,10 @@ else{wrap.style.display='grid';document.getElementById('fovw').value=TELE[v].w;d
 scopeChange();
 
 const MESSIER=[["M1",5.575,22.017],["M2",21.558,-0.817],["M3",13.703,28.383],["M4",16.393,-26.533],["M5",15.310,2.083],["M6",17.668,-32.217],["M7",17.898,-34.817],["M8",18.063,-24.383],["M9",17.320,-18.517],["M10",16.952,-4.100],["M11",18.852,-6.267],["M12",16.787,-1.950],["M13",16.695,36.467],["M14",17.627,-3.250],["M15",21.500,12.167],["M16",18.313,-13.783],["M17",18.347,-16.183],["M18",18.332,-17.133],["M19",17.043,-26.267],["M20",18.043,-23.033],["M21",18.077,-22.500],["M22",18.607,-23.900],["M23",17.947,-19.017],["M24",18.282,-18.483],["M25",18.527,-19.250],["M26",18.753,-9.400],["M27",19.993,22.717],["M28",18.408,-24.867],["M29",20.398,38.533],["M30",21.673,-23.183],["M31",0.712,41.267],["M32",0.712,40.867],["M33",1.565,30.650],["M34",2.700,42.783],["M35",6.150,24.350],["M36",5.602,34.133],["M37",5.873,32.550],["M38",5.478,35.833],["M39",21.537,48.433],["M40",12.373,58.083],["M41",6.767,-20.733],["M42",5.588,-5.383],["M43",5.592,-5.267],["M44",8.668,19.983],["M45",3.783,24.117],["M46",7.697,-14.817],["M47",7.610,-14.500],["M48",8.230,-5.800],["M49",12.492,8.000],["M50",7.053,-8.333],["M51",13.498,47.200],["M52",23.403,61.583],["M53",13.215,18.167],["M54",18.918,-30.483],["M55",19.667,-30.967],["M56",19.277,30.183],["M57",18.893,33.033],["M58",12.628,11.817],["M59",12.700,11.650],["M60",12.728,11.550],["M61",12.365,4.467],["M62",17.020,-30.117],["M63",13.263,42.033],["M64",12.945,21.683],["M65",11.315,13.083],["M66",11.338,12.983],["M67",8.855,11.817],["M68",12.658,-26.750],["M69",18.523,-32.350],["M70",18.720,-32.300],["M71",19.897,18.783],["M72",20.892,-12.533],["M73",20.982,-12.633],["M74",1.612,15.783],["M75",20.102,-21.917],["M76",1.707,51.567],["M77",2.712,-0.017],["M78",5.778,0.050],["M79",5.408,-24.550],["M80",16.283,-22.983],["M81",9.927,69.067],["M82",9.930,69.683],["M83",13.617,-29.867],["M84",12.418,12.883],["M85",12.423,18.183],["M86",12.437,12.950],["M87",12.513,12.400],["M88",12.533,14.417],["M89",12.595,12.550],["M90",12.613,13.167],["M91",12.590,14.500],["M92",17.285,43.133],["M93",7.743,-23.867],["M94",12.848,41.117],["M95",10.733,11.700],["M96",10.780,11.817],["M97",11.247,55.017],["M98",12.230,14.900],["M99",12.313,14.417],["M100",12.382,15.817],["M101",14.053,54.350],["M102",15.108,55.767],["M103",1.553,60.700],["M104",12.667,-11.617],["M105",10.797,12.583],["M106",12.317,47.300],["M107",16.542,-13.050],["M108",11.192,55.667],["M109",11.960,53.383],["M110",0.673,41.683]];
+const MNAMES=["Crab Nebula", "Globular cluster, Aquarius", "Globular cluster, Canes Venatici", "Globular cluster, Scorpius", "Globular cluster, Serpens", "Butterfly Cluster", "Ptolemy Cluster", "Lagoon Nebula", "Globular cluster, Ophiuchus", "Globular cluster, Ophiuchus", "Wild Duck Cluster", "Gumball Globular Cluster", "Great Hercules Cluster", "Globular cluster, Ophiuchus", "Great Pegasus Cluster", "Eagle Nebula", "Omega (Swan) Nebula", "Open cluster, Sagittarius", "Globular cluster, Ophiuchus", "Trifid Nebula", "Open cluster, Sagittarius", "Sagittarius Cluster", "Open cluster, Sagittarius", "Sagittarius Star Cloud", "Open cluster, Sagittarius", "Open cluster, Scutum", "Dumbbell Nebula", "Globular cluster, Sagittarius", "Cooling Tower Cluster", "Globular cluster, Capricornus", "Andromeda Galaxy", "Andromeda companion (M32)", "Triangulum Galaxy", "Open cluster, Perseus", "Open cluster, Gemini", "Pinwheel Cluster", "Open cluster, Auriga", "Starfish Cluster", "Open cluster, Cygnus", "Winnecke 4 (double star)", "Little Beehive Cluster", "Orion Nebula", "De Mairan's Nebula", "Beehive Cluster", "Pleiades", "Open cluster, Puppis", "Open cluster, Puppis", "Open cluster, Hydra", "Elliptical galaxy, Virgo", "Heart-Shaped Cluster", "Whirlpool Galaxy", "Open cluster, Cassiopeia", "Globular cluster, Coma Berenices", "Globular cluster, Sagittarius", "Globular cluster, Sagittarius", "Globular cluster, Lyra", "Ring Nebula", "Barred spiral galaxy, Virgo", "Elliptical galaxy, Virgo", "Elliptical galaxy, Virgo", "Spiral galaxy, Virgo", "Globular cluster, Ophiuchus", "Sunflower Galaxy", "Black Eye Galaxy", "Leo Triplet galaxy", "Leo Triplet galaxy", "Open cluster, Cancer", "Globular cluster, Hydra", "Globular cluster, Sagittarius", "Globular cluster, Sagittarius", "Globular cluster, Sagitta", "Globular cluster, Aquarius", "Asterism, Aquarius", "Phantom Galaxy", "Globular cluster, Sagittarius", "Little Dumbbell Nebula", "Cetus A galaxy", "Reflection nebula, Orion", "Globular cluster, Lepus", "Globular cluster, Scorpius", "Bode's Galaxy", "Cigar Galaxy", "Southern Pinwheel Galaxy", "Lenticular galaxy, Virgo", "Lenticular galaxy, Coma Berenices", "Lenticular galaxy, Virgo", "Virgo A (giant elliptical)", "Spiral galaxy, Coma Berenices", "Elliptical galaxy, Virgo", "Spiral galaxy, Virgo", "Barred spiral galaxy, Coma Berenices", "Globular cluster, Hercules", "Open cluster, Puppis", "Croc's Eye Galaxy", "Barred spiral galaxy, Leo", "Spiral galaxy, Leo", "Owl Nebula", "Spiral galaxy, Coma Berenices", "Coma Pinwheel Galaxy", "Spiral galaxy, Coma Berenices", "Pinwheel Galaxy", "Spindle Galaxy", "Open cluster, Cassiopeia", "Sombrero Galaxy", "Elliptical galaxy, Leo", "Spiral galaxy, Canes Venatici", "Globular cluster, Ophiuchus", "Surfboard Galaxy", "Barred spiral galaxy, Ursa Major", "Andromeda companion (M110)"];
 function fillCatalogSelect(){
 const sel=document.getElementById('catalogTarget');
-MESSIER.forEach(([name])=>{const o=document.createElement('option');o.value=name;o.textContent=name;sel.appendChild(o);});
+MESSIER.forEach(([id],i)=>{const o=document.createElement('option');o.value=id;o.textContent=id+' — '+MNAMES[i];sel.appendChild(o);});
 }
 fillCatalogSelect();
 function applyCatalogTarget(){
@@ -255,6 +470,41 @@ if(Math.sin(ha)>0) az=2*Math.PI-az;
 return {alt:satellite.radiansToDegrees(alt),az:satellite.radiansToDegrees(az)};
 }
 
+const AU_KM=149597870.7, RE_KM=6378.137;
+const SUN_CACHE=new Map();
+function sunEci(ms){
+const key=Math.round(ms/1000);
+let v=SUN_CACHE.get(key);if(v) return v;
+const n=(key/86400+2440587.5)-2451545.0,rad=Math.PI/180;
+const L=(280.460+0.9856474*n)%360,g=((357.528+0.9856003*n)%360)*rad;
+const lam=(L+1.915*Math.sin(g)+0.020*Math.sin(2*g))*rad,eps=(23.439-0.0000004*n)*rad;
+const R=(1.00014-0.01671*Math.cos(g)-0.00014*Math.cos(2*g))*AU_KM;
+const x=R*Math.cos(lam),y=R*Math.cos(eps)*Math.sin(lam),z=R*Math.sin(eps)*Math.sin(lam);
+v={x,y,z,ux:x/R,uy:y/R,uz:z/R};
+SUN_CACHE.set(key,v);return v;
+}
+// true when a satellite (km, Earth-centred) is outside Earth's shadow, i.e. lit by the Sun
+function isSunlit(pos,ms){
+const s=sunEci(ms);
+const d=pos.x*s.ux+pos.y*s.uy+pos.z*s.uz;
+if(d>=0) return true;
+const px=pos.x-d*s.ux,py=pos.y-d*s.uy,pz=pos.z-d*s.uz;
+return Math.hypot(px,py,pz)>RE_KM;
+}
+function sunAltDeg(ms,latDeg,lonDeg){
+const s=sunEci(ms);
+const ecf=satellite.eciToEcf({x:s.x,y:s.y,z:s.z},satellite.gstime(new Date(ms)));
+const look=satellite.ecfToLookAngles({longitude:lonDeg*Math.PI/180,latitude:latDeg*Math.PI/180,height:0.3},ecf);
+return look.elevation*180/Math.PI;
+}
+function sunNoteText(a,b){
+let maxAlt=-90;
+for(let t=a;t<=b;t+=60000){const h=sunAltDeg(t,LAT,LON);if(h>maxAlt)maxAlt=h;}
+if(maxAlt>0) return 'Daylight: the Sun is above your horizon for part of this window. Satellites are lit in daylight, but you cannot image through a daytime sky. Move the session to after dark.';
+if(maxAlt>-18) return 'Twilight: the Sun is less than 18° below your horizon for part of this window, so the sky is not fully dark yet (or is starting to lighten).';
+return '';
+}
+
 function classify(pts,fovW,fovH){
 let minR=Infinity,everInFov=false;
 for(const p of pts){
@@ -267,7 +517,7 @@ return minR<=0.5?'red':'orange';
 }
 const COLORS={green:'#34d399',orange:'#fbbf24',red:'#f87171'};
 
-function sampleOne(s,observerGd,tStart,tEnd,stepSec,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH){
+function sampleOne(s,observerGd,tStart,tEnd,stepSec,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,sunGate){
 const nSteps=Math.max(1,Math.round((tEnd-tStart)/1000/stepSec));
 const displayPasses=[],fovPasses=[];
 let dPts=[],fCur=null;
@@ -289,6 +539,7 @@ x=dAz*Math.cos(satellite.degreesToRadians(tgt.alt));
 y=satAlt-tgt.alt;
 if(Math.abs(x)<=skyW/2 && Math.abs(y)<=skyH/2) inSky=true;
 if(Math.abs(x)<=fovW/2 && Math.abs(y)<=fovH/2) inFov=true;
+if(sunGate&&(inSky||inFov)&&!isSunlit(pv.position,date.getTime())){inSky=false;inFov=false;}
 }
 }catch(e){}
 if(inSky){dPts.push({t:date.getTime(),x,y,inFov});}
@@ -314,12 +565,10 @@ if(coarse.displayPasses.length){
 coarse.displayPasses.forEach(cp=>{
 const rs=Math.max(t0,cp.tIn-coarseStep*1000);
 const re=Math.min(t1,cp.tOut+coarseStep*1000);
-const fine=sampleOne(s,observerGd,rs,re,FINE_STEP,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH);
+const fine=sampleOne(s,observerGd,rs,re,FINE_STEP,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,true);
 if(fine.displayPasses.length){
 fine.displayPasses.forEach(p=>displayPasses.push(p));
 fine.fovPasses.forEach(p=>fovPasses.push(p));
-}else{
-displayPasses.push(cp);
 }
 });
 }
@@ -332,53 +581,95 @@ if(onProgress) onProgress(sats.length,sats.length);
 return {displayPasses,fovPasses};
 }
 
+const MARG={l:104,r:16,t:16,b:72};
+function niceStep(span){for(const c of [0.05,0.1,0.25,0.5,1,2,5]){if(span/c<=8)return c;}return 5;}
 function drawFOV(canvas,passes,fovW,fovH,skyW,skyH,tw,th,rangeStart,rangeEnd){
 const ctx=canvas.getContext('2d');
 const W=canvas.width,H=canvas.height;
-ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
-const toX=x=>((x+skyW/2)/skyW)*W;
-const toY=y=>H-((y+skyH/2)/skyH)*H;
-ctx.strokeStyle='#1c2a44';ctx.lineWidth=1;
-for(let i=1;i<6;i++){const gx=W*i/6,gy=H*i/6;ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();}
-// FOV box
-ctx.strokeStyle='#60a5fa';ctx.lineWidth=2;
-ctx.strokeRect(toX(-fovW/2),toY(fovH/2),toX(fovW/2)-toX(-fovW/2),toY(-fovH/2)-toY(fovH/2));
-// target ellipse
-const pxPerDegX=W/skyW,pxPerDegY=H/skyH;
-ctx.fillStyle='rgba(200,200,200,0.25)';ctx.strokeStyle='rgba(200,200,200,0.6)';ctx.lineWidth=1;
-ctx.beginPath();ctx.ellipse(toX(0),toY(0),(tw/60/2)*pxPerDegX,(th/60/2)*pxPerDegY,0,0,2*Math.PI);ctx.fill();ctx.stroke();
-// axis ticks
-ctx.fillStyle='#8ea0bd';ctx.font='10px sans-serif';
-for(let i=-2;i<=2;i++){const dv=(skyW/2)*(i/2);ctx.fillText((dv>=0?'+':'')+dv.toFixed(1)+'°',toX(dv)-14,H-4);}
-for(let i=-2;i<=2;i++){const dv=(skyH/2)*(i/2);ctx.fillText((dv>=0?'+':'')+dv.toFixed(1)+'°',2,toY(dv)+3);}
-let counts={green:0,orange:0,red:0};
-for(const p of passes){
-if(!VISIBLE[p.cls] && p.satnum!==HIGHLIGHT_SATNUM) continue;
-const pts=p.points.filter(pt=>pt.t>=rangeStart&&pt.t<=rangeEnd);
-if(pts.length<1) continue;
-counts[p.cls]++;
-const isHi=p.satnum===HIGHLIGHT_SATNUM;
-ctx.strokeStyle=COLORS[p.cls];ctx.lineWidth=isHi?3:2;
-ctx.setLineDash(isHi?[6,4]:[]);
-ctx.beginPath();
-pts.forEach((pt,i)=>{const cx=toX(pt.x),cy=toY(pt.y); if(i===0)ctx.moveTo(cx,cy);else ctx.lineTo(cx,cy);});
-ctx.stroke();
+const px=MARG.l,py=MARG.t,pw=W-MARG.l-MARG.r,ph=H-MARG.t-MARG.b;
+ctx.setLineDash([]);ctx.shadowBlur=0;
+ctx.fillStyle='#0b1220';ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#000';ctx.fillRect(px,py,pw,ph);
+const toX=x=>px+((x+skyW/2)/skyW)*pw;
+const toY=y=>py+ph-((y+skyH/2)/skyH)*ph;
+// scales live in their own border, outside the sky area
+const sx=niceStep(skyW),sy=niceStep(skyH);
+const dx=sx>=1?0:sx>=0.5?1:2,dy=sy>=1?0:sy>=0.5?1:2;
+ctx.font='22px -apple-system,system-ui,sans-serif';ctx.fillStyle='#c3cee3';
+ctx.textAlign='center';ctx.textBaseline='alphabetic';
+for(let v=Math.ceil(-skyW/2/sx)*sx;v<=skyW/2+1e-9;v+=sx){
+const X=toX(v);ctx.strokeStyle=Math.abs(v)<1e-9?'#22324f':'#111b30';ctx.lineWidth=1;
+ctx.beginPath();ctx.moveTo(X,py);ctx.lineTo(X,py+ph);ctx.stroke();
+ctx.strokeStyle='#5b6d8f';ctx.beginPath();ctx.moveTo(X,py+ph);ctx.lineTo(X,py+ph+9);ctx.stroke();
+ctx.fillText((v>1e-9?'+':'')+v.toFixed(dx)+'°',X,py+ph+34);
 }
-ctx.setLineDash([]);
-ctx.fillStyle='#e6edf7';ctx.font='bold 14px sans-serif';
-ctx.fillText(`${counts.red+counts.orange+counts.green} trail(s) — ${counts.red} core, ${counts.orange} FOV, ${counts.green} near-miss`,8,18);
+ctx.textAlign='right';ctx.textBaseline='middle';
+for(let v=Math.ceil(-skyH/2/sy)*sy;v<=skyH/2+1e-9;v+=sy){
+const Y=toY(v);ctx.strokeStyle=Math.abs(v)<1e-9?'#22324f':'#111b30';ctx.lineWidth=1;
+ctx.beginPath();ctx.moveTo(px,Y);ctx.lineTo(px+pw,Y);ctx.stroke();
+ctx.strokeStyle='#5b6d8f';ctx.beginPath();ctx.moveTo(px-9,Y);ctx.lineTo(px,Y);ctx.stroke();
+ctx.fillText((v>1e-9?'+':'')+v.toFixed(dy)+'°',px-16,Y);
+}
+ctx.fillStyle='#8393b0';ctx.font='20px -apple-system,system-ui,sans-serif';
+ctx.textAlign='center';ctx.textBaseline='alphabetic';
+ctx.fillText('Azimuth offset from target',px+pw/2,H-8);
+ctx.save();ctx.translate(24,py+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='middle';ctx.fillText('Altitude offset from target',0,0);ctx.restore();
+// sky area: everything below is clipped to it
+ctx.save();ctx.beginPath();ctx.rect(px,py,pw,ph);ctx.clip();
+ctx.fillStyle='rgba(200,200,200,0.28)';ctx.strokeStyle='rgba(215,215,215,0.7)';ctx.lineWidth=2;
+ctx.beginPath();ctx.ellipse(toX(0),toY(0),(tw/60/2)*pw/skyW,(th/60/2)*ph/skyH,0,0,2*Math.PI);ctx.fill();ctx.stroke();
+const counts={green:0,orange:0,red:0},hiList=[];
+const path=pts=>{ctx.beginPath();pts.forEach((pt,i)=>{const cx=toX(pt.x),cy=toY(pt.y);if(i===0)ctx.moveTo(cx,cy);else ctx.lineTo(cx,cy);});};
+for(const p of passes){
+const hi=HIGHLIGHT_SATNUM!==null&&String(p.satnum)===HIGHLIGHT_SATNUM;
+if(!VISIBLE[p.cls]&&!hi) continue;
+const pts=p.points.filter(pt=>pt.t>=rangeStart&&pt.t<=rangeEnd);
+if(!pts.length) continue;
+counts[p.cls]++;
+if(hi){hiList.push({p,pts});continue;}
+ctx.strokeStyle=COLORS[p.cls];ctx.lineWidth=3;path(pts);ctx.stroke();
+}
+for(const {p,pts} of hiList){
+ctx.setLineDash([]);ctx.strokeStyle='rgba(0,0,0,0.9)';ctx.lineWidth=11;path(pts);ctx.stroke();
+ctx.strokeStyle=COLORS[p.cls];ctx.lineWidth=5;ctx.setLineDash([16,10]);path(pts);ctx.stroke();ctx.setLineDash([]);
+const m=pts[Math.floor(pts.length/2)];
+ctx.font='bold 24px -apple-system,system-ui,sans-serif';ctx.textAlign='left';ctx.textBaseline='bottom';
+ctx.lineWidth=6;ctx.strokeStyle='#000';ctx.strokeText(p.name,toX(m.x)+12,toY(m.y)-10);
+ctx.fillStyle='#fff';ctx.fillText(p.name,toX(m.x)+12,toY(m.y)-10);
+}
+ctx.restore();
+// telescope FOV box sits above every trail
+ctx.setLineDash([]);ctx.strokeStyle='#4da3ff';ctx.lineWidth=7;ctx.shadowColor='#4da3ff';ctx.shadowBlur=16;
+ctx.strokeRect(toX(-fovW/2),toY(fovH/2),toX(fovW/2)-toX(-fovW/2),toY(-fovH/2)-toY(fovH/2));
+ctx.shadowBlur=0;
+ctx.strokeStyle='#2a3a5c';ctx.lineWidth=2;ctx.strokeRect(px,py,pw,ph);
+return counts;
 }
 
-function frameStats(passes,winStart,winEnd,expSec){
-const total=Math.floor((winEnd-winStart)/1000/expSec);
-if(total<=0) return {total:0,bad:0,pct:0};
-let bad=0;
-for(let i=0;i<total;i++){
-const fs=winStart+i*expSec*1000, fe=fs+expSec*1000;
-const hit=passes.some(p=>p.tIn<=fe && p.tOut>=fs);
-if(hit) bad++;
+function drawFrameStrip(){
+const c=document.getElementById('frameStrip'),ctx=c.getContext('2d');
+const W=c.width,H=c.height;
+ctx.fillStyle='#0b1220';ctx.fillRect(0,0,W,H);
+const flags=frameFlags(FOV_PASSES,ACTIVE_START,ACTIVE_END,ACTIVE_EXP),n=flags.length;
+const cap=document.getElementById('frameCaption');
+if(!n){cap.textContent='Session is shorter than one exposure.';return;}
+const bw=W/n;
+flags.forEach((bad,i)=>{ctx.fillStyle=bad?'#f87171':'#2fbf8f';ctx.fillRect(i*bw,0,Math.max(1,bw-(bw>3?1:0)),H);});
+const bad=flags.filter(Boolean).length;
+const t=ms=>new Date(ms).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+cap.textContent=`Frame map, ${t(ACTIVE_START)} to ${t(ACTIVE_END)}: one bar per ${ACTIVE_EXP}s sub. ${n-bad} kept (green), ${bad} rejected (red).`;
 }
-return {total,bad,pct:((total-bad)/total*100)};
+
+function frameFlags(passes,ws,we,exp){
+const n=Math.floor((we-ws)/1000/exp),f=[];
+for(let i=0;i<n;i++){const a=ws+i*exp*1000,b=a+exp*1000;f.push(passes.some(p=>p.tIn<=b&&p.tOut>=a));}
+return f;
+}
+function frameStats(passes,ws,we,exp){
+const f=frameFlags(passes,ws,we,exp),total=f.length;
+if(!total) return {total:0,bad:0,pct:0};
+const bad=f.filter(Boolean).length;
+return {total,bad,pct:(total-bad)/total*100};
 }
 
 async function runSim(){
@@ -412,7 +703,7 @@ const res=await computeAllPasses(sats,superStart,superEnd,stepSec,LAT,LON,raHr,d
 );
 PASSES_DISPLAY=res.displayPasses; FOV_PASSES=res.fovPasses;
 
-btn.disabled=false; btn.textContent='▶ Run Simulation';
+btn.disabled=false; btn.textContent='Run simulation';
 document.getElementById('progWrap').style.display='none';
 
 ACTIVE_START=WIN_START.getTime(); ACTIVE_END=WIN_END.getTime(); ACTIVE_EXP=expSec;
@@ -420,8 +711,8 @@ VISIBLE={green:true,orange:true,red:true}; HIGHLIGHT_SATNUM=null;
 updateLegendStyle();
 document.getElementById('results').style.display='block';
 const canvas=document.getElementById('fov');
-canvas.height=Math.round(canvas.width*skyH/skyW);
-document.getElementById('fovCaption').textContent=`FOV ${FOVW}°×${FOVH}° (blue box) inside a ${skyW.toFixed(1)}°×${skyH.toFixed(1)}° sky view · axes show Δaz/Δalt offset from target · ${sats.length} satellites checked. Field rotation not modeled.`;
+canvas.width=1280;canvas.height=Math.round((canvas.width-MARG.l-MARG.r)*skyH/skyW+MARG.t+MARG.b);
+document.getElementById('fovCaption').textContent=`FOV ${FOVW}°×${FOVH}° (blue box) inside a ${skyW.toFixed(1)}°×${skyH.toFixed(1)}° sky view · axes show Δaz/Δalt offset from target · ${sats.length} satellites checked; only those lit by the Sun are drawn. Field rotation not modeled.`;
 redrawAndStats();
 renderShiftTable();
 }
@@ -432,31 +723,25 @@ updateLegendStyle();
 redrawAndStats();
 }
 function updateLegendStyle(){
-document.querySelectorAll('#legend span[data-cls]').forEach(el=>{
-el.style.opacity=VISIBLE[el.dataset.cls]?'1':'0.35';
-el.style.textDecoration=VISIBLE[el.dataset.cls]?'none':'line-through';
-});
+document.querySelectorAll('#legend [data-cls]').forEach(el=>el.classList.toggle('off',!VISIBLE[el.dataset.cls]));
 }
 function highlightSat(satnum){
 HIGHLIGHT_SATNUM=(HIGHLIGHT_SATNUM===satnum)?null:satnum;
 redrawAndStats();
 }
 function redrawAndStats(){
-const canvas=document.getElementById('fov');
-drawFOV(canvas,PASSES_DISPLAY,FOVW,FOVH,FOVW*SKY_FACTOR,FOVH*SKY_FACTOR,TW,TH,ACTIVE_START,ACTIVE_END);
-renderEfficiency();
-renderExpTable();
-renderSatTable();
+const c=drawFOV(document.getElementById('fov'),PASSES_DISPLAY,FOVW,FOVH,FOVW*SKY_FACTOR,FOVH*SKY_FACTOR,TW,TH,ACTIVE_START,ACTIVE_END);
+const st=frameStats(FOV_PASSES,ACTIVE_START,ACTIVE_END,ACTIVE_EXP);
+document.getElementById('fovCount').innerHTML=`<b>${c.red+c.orange+c.green}</b> trails in view: <b>${c.red}</b> through target, <b>${c.orange}</b> across frame, <b>${c.green}</b> near-miss. At ${ACTIVE_EXP}s subs, <b>${st.bad}</b> of ${st.total} frames are rejected.`;
+document.getElementById('sunNote').textContent=sunNoteText(ACTIVE_START,ACTIVE_END);
+drawFrameStrip();renderEfficiency();renderExpTable();renderSatTable();
 }
 
 function renderEfficiency(){
 const st=frameStats(FOV_PASSES,ACTIVE_START,ACTIVE_END,ACTIVE_EXP);
-document.getElementById('effCard').innerHTML=`
-<div class="stat"><span>Session length</span><b>${((ACTIVE_END-ACTIVE_START)/60000).toFixed(0)} min</b></div>
-<div class="stat"><span>Exposure length</span><b>${ACTIVE_EXP}s</b></div>
-<div class="stat"><span>Total frames</span><b>${st.total}</b></div>
-<div class="stat"><span>Frames rejected (satellite trail)</span><b style="color:var(--bad)">${st.bad}</b></div>
-<div class="stat"><span>Effective accumulation efficiency</span><b>${st.pct.toFixed(1)}%</b></div>`;
+const col=st.pct>=90?'var(--good)':st.pct>=75?'#fbbf24':'var(--bad)';
+document.getElementById('effCard').innerHTML=`<div class="hero"><div class="big" style="color:${col}">${st.pct.toFixed(1)}<span>%</span></div><div class="heroL">of exposure time stays trail-free</div></div>
+<div class="kv"><div><small>Session</small><b>${((ACTIVE_END-ACTIVE_START)/60000).toFixed(0)} min</b></div><div><small>Sub-exposure</small><b>${ACTIVE_EXP}s</b></div><div><small>Frames</small><b>${st.total}</b></div><div><small>Rejected</small><b class="bad">${st.bad}</b></div></div>`;
 }
 
 function renderShiftTable(){
@@ -486,18 +771,49 @@ document.getElementById('expTbl').innerHTML=html;
 function selectExp(e){
 ACTIVE_EXP=e;
 document.getElementById('exp').value=e;
-renderEfficiency(); renderExpTable();
+redrawAndStats();renderShiftTable();
 }
 
 function renderSatTable(){
 const inWin=FOV_PASSES.filter(p=>p.tIn<ACTIVE_END && p.tOut>ACTIVE_START);
 let html='<tr><th>Satellite</th><th>Enter FOV</th><th>Exit FOV</th><th>Duration</th></tr>';
 inWin.sort((a,b)=>a.tIn-b.tIn).forEach(p=>{
-const hi=p.satnum===HIGHLIGHT_SATNUM?'hi':'';
-html+=`<tr class="${hi}" data-clk onclick="highlightSat(${p.satnum})"><td><span class="dot" style="background:${COLORS[p.cls]}"></span>${p.name}</td><td>${new Date(p.tIn).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${new Date(p.tOut).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${((p.tOut-p.tIn)/1000).toFixed(0)}s</td></tr>`;
+const hi=String(p.satnum)===HIGHLIGHT_SATNUM?'hi':'';
+html+=`<tr class="${hi}" data-clk onclick="highlightSat('${p.satnum}')"><td><span class="dot" style="background:${COLORS[p.cls]}"></span>${p.name}</td><td>${new Date(p.tIn).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${new Date(p.tOut).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${((p.tOut-p.tIn)/1000).toFixed(0)}s</td></tr>`;
 });
 document.getElementById('satTbl').innerHTML=html || '<tr><td>No satellites crossed the FOV in this window.</td></tr>';
 }
+
+let GUIDE_RETURN=null;
+function guideEl(){return document.getElementById('guide');}
+function openGuide(id){
+GUIDE_RETURN=document.activeElement;
+const g=guideEl();g.hidden=false;document.body.style.overflow='hidden';
+const body=document.getElementById('guideBody'),t=document.getElementById(id||'g-start');
+body.scrollTop=t?Math.max(0,t.offsetTop-4):0;
+guideSpy();
+g.querySelector('.guide-head button').focus();
+}
+function closeGuide(){
+guideEl().hidden=true;document.body.style.overflow='';
+if(GUIDE_RETURN&&GUIDE_RETURN.focus) GUIDE_RETURN.focus();
+}
+function guideGo(id){
+const body=document.getElementById('guideBody'),t=document.getElementById(id);
+const calm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+body.scrollTo({top:Math.max(0,t.offsetTop-4),behavior:calm?'auto':'smooth'});
+}
+function guideSpy(){
+const body=document.getElementById('guideBody'),nav=document.getElementById('guideNav');
+let cur=null;
+document.querySelectorAll('#guideBody .gs').forEach(s=>{if(s.offsetTop<=body.scrollTop+40)cur=s.id;});
+nav.querySelectorAll('button').forEach(b=>{
+const on=b.dataset.t===cur;b.classList.toggle('on',on);
+if(on) nav.scrollLeft=b.offsetLeft-nav.clientWidth/2+b.clientWidth/2;
+});
+}
+document.getElementById('guideBody').addEventListener('scroll',guideSpy,{passive:true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!guideEl().hidden)closeGuide();});
 </script>
 </body>
 </html>
