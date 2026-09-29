@@ -16,7 +16,7 @@ body{margin:0 auto;max-width:980px;background:var(--ink);color:var(--txt);font-f
 .mast h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;letter-spacing:-.01em;margin:0}
 .sub{color:var(--muted);margin:4px 0 22px;font-size:.95rem}
 h2{font-family:var(--serif);font-weight:500;font-size:1.3rem;margin:0 0 10px}
-h3{font-size:.8rem;font-weight:600;color:var(--muted);margin:0 0 8px}
+h3{font-size:1.05rem;font-weight:700;color:var(--acc);letter-spacing:.01em;margin:0 0 10px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
 .grp{padding:14px 0;border-top:1px solid var(--line)}
 .grp.first{border-top:0;padding-top:4px}
@@ -52,6 +52,8 @@ tr[data-clk]{cursor:pointer}
 tr[data-clk]:hover{background:#0f1830}
 tr.hi{background:#14203a;box-shadow:inset 3px 0 0 var(--acc)}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+.infoRow td{background:#0f1830;border-bottom:2px solid var(--line2);font-size:.82rem;color:#c9d3e6;padding:12px 14px}
+.infoRow b{color:var(--txt)}
 .hero{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 .big{font-family:var(--serif);font-size:3.4rem;line-height:1;font-weight:500;font-variant-numeric:tabular-nums}
 .big span{font-size:1.5rem;color:var(--muted);margin-left:2px}
@@ -127,6 +129,12 @@ tr.hi{background:#14203a;box-shadow:inset 3px 0 0 var(--acc)}
 <div><label>Telescope</label><select id="scope" onchange="scopeChange()"></select></div>
 <div><label>Exposure</label><select id="exp"></select></div>
 </div>
+<div class="grid" style="margin-top:10px">
+<div class="full"><label>Mount tracking mode</label><select id="mountMode">
+<option value="altaz">Alt-Az — raw mount frame (field rotates during the session)</option>
+<option value="eq">EQ / de-rotated — frame stays fixed to the sky (most smart-scope live stacking)</option>
+</select></div>
+</div>
 <div class="grid" style="margin-top:10px" id="fovCustomWrap">
 <div><label>FOV width (°)</label><input id="fovw" type="number" step="any" value="2.95"></div>
 <div><label>FOV height (°)</label><input id="fovh" type="number" step="any" value="1.66"></div>
@@ -166,6 +174,7 @@ Fetching needs internet and CelesTrak allowing the request; if it fails, paste a
 <p class="hint" id="fovCaption"></p>
 <canvas id="frameStrip" width="1280" height="56"></canvas>
 <p class="hint" id="frameCaption"></p>
+<p class="hint" id="longCaption" style="color:#8ef0c8"></p>
 </section>
 
 <section class="sec"><div class="hd"><h2>Efficiency</h2><button class="help" onclick="openGuide('g-eff')" aria-label="Help: Efficiency">?</button></div><div id="effCard"></div></section>
@@ -383,6 +392,7 @@ let VISIBLE={green:true,orange:true,red:true};
 let HIGHLIGHT_SATNUM=null;
 let WIN_START,WIN_END,FOVW,FOVH,LAT,LON,TW,TH;
 let ACTIVE_START,ACTIVE_END,ACTIVE_EXP;
+let NIGHT_START=null,NIGHT_END=null;
 
 function useGPS(){
 navigator.geolocation.getCurrentPosition(p=>{
@@ -469,6 +479,13 @@ let az=Math.acos(cosA);
 if(Math.sin(ha)>0) az=2*Math.PI-az;
 return {alt:satellite.radiansToDegrees(alt),az:satellite.radiansToDegrees(az)};
 }
+function parallacticAngle(date,raHr,decDeg,latDeg,lonDeg){
+const gmst=satellite.gstime(date);
+const lst=gmst+satellite.degreesToRadians(lonDeg);
+const H=lst-raHr*15*Math.PI/180;
+const dec=satellite.degreesToRadians(decDeg),lat=satellite.degreesToRadians(latDeg);
+return Math.atan2(Math.sin(H),Math.tan(lat)*Math.cos(dec)-Math.sin(dec)*Math.cos(H));
+}
 
 const AU_KM=149597870.7, RE_KM=6378.137;
 const SUN_CACHE=new Map();
@@ -504,6 +521,22 @@ if(maxAlt>0) return 'Daylight: the Sun is above your horizon for part of this wi
 if(maxAlt>-18) return 'Twilight: the Sun is less than 18° below your horizon for part of this window, so the sky is not fully dark yet (or is starting to lighten).';
 return '';
 }
+function findTwilightBounds(centerMs,latDeg,lonDeg){
+const stepMs=2*60000, spanMs=16*3600000;
+let prevDark=null,runStart=null,best=null;
+for(let t=centerMs-spanMs;t<=centerMs+spanMs;t+=stepMs){
+const dark=sunAltDeg(t,latDeg,lonDeg)<=-18;
+if(dark&&runStart===null) runStart=t;
+if(!dark&&runStart!==null){
+if(runStart<=centerMs+3600000 && t>=centerMs-3600000){best={dusk:runStart,dawn:t};break;}
+runStart=null;
+}
+prevDark=dark;
+}
+if(!best && runStart!==null) best={dusk:runStart,dawn:centerMs+spanMs};
+return best;
+}
+
 
 function classify(pts,fovW,fovH){
 let minR=Infinity,everInFov=false;
@@ -517,7 +550,7 @@ return minR<=0.5?'red':'orange';
 }
 const COLORS={green:'#34d399',orange:'#fbbf24',red:'#f87171'};
 
-function sampleOne(s,observerGd,tStart,tEnd,stepSec,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,sunGate){
+function sampleOne(s,observerGd,tStart,tEnd,stepSec,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,sunGate,mode,q0){
 const nSteps=Math.max(1,Math.round((tEnd-tStart)/1000/stepSec));
 const displayPasses=[],fovPasses=[];
 let dPts=[],fCur=null;
@@ -537,6 +570,11 @@ const tgt=targetAltAz(date,raHr,decDeg,latDeg,lonDeg);
 let dAz=satAz-tgt.az; while(dAz>180)dAz-=360; while(dAz<-180)dAz+=360;
 x=dAz*Math.cos(satellite.degreesToRadians(tgt.alt));
 y=satAlt-tgt.alt;
+if(mode==='eq'){
+const q=parallacticAngle(date,raHr,decDeg,latDeg,lonDeg),dq=q-q0;
+const rx=x*Math.cos(-dq)-y*Math.sin(-dq),ry=x*Math.sin(-dq)+y*Math.cos(-dq);
+x=rx;y=ry;
+}
 if(Math.abs(x)<=skyW/2 && Math.abs(y)<=skyH/2) inSky=true;
 if(Math.abs(x)<=fovW/2 && Math.abs(y)<=fovH/2) inFov=true;
 if(sunGate&&(inSky||inFov)&&!isSunlit(pv.position,date.getTime())){inSky=false;inFov=false;}
@@ -552,7 +590,7 @@ if(fCur) fovPasses.push({name:s.name,satnum:s.satnum,tIn:fCur.pts[0].t,tOut:fCur
 return {displayPasses,fovPasses};
 }
 
-async function computeAllPasses(sats,tStart,tEnd,coarseStep,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,onProgress){
+async function computeAllPasses(sats,tStart,tEnd,coarseStep,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,onProgress,mode,q0){
 const observerGd={longitude:satellite.degreesToRadians(lonDeg),latitude:satellite.degreesToRadians(latDeg),height:0.3};
 const FINE_STEP=0.5;
 const displayPasses=[],fovPasses=[];
@@ -560,12 +598,12 @@ const t0=tStart.getTime(),t1=tEnd.getTime();
 const CHUNK=250;
 for(let idx=0;idx<sats.length;idx++){
 const s=sats[idx];
-const coarse=sampleOne(s,observerGd,t0,t1,coarseStep,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH);
+const coarse=sampleOne(s,observerGd,t0,t1,coarseStep,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,false,mode,q0);
 if(coarse.displayPasses.length){
 coarse.displayPasses.forEach(cp=>{
 const rs=Math.max(t0,cp.tIn-coarseStep*1000);
 const re=Math.min(t1,cp.tOut+coarseStep*1000);
-const fine=sampleOne(s,observerGd,rs,re,FINE_STEP,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,true);
+const fine=sampleOne(s,observerGd,rs,re,FINE_STEP,latDeg,lonDeg,raHr,decDeg,fovW,fovH,skyW,skyH,true,mode,q0);
 if(fine.displayPasses.length){
 fine.displayPasses.forEach(p=>displayPasses.push(p));
 fine.fovPasses.forEach(p=>fovPasses.push(p));
@@ -612,8 +650,9 @@ ctx.fillText((v>1e-9?'+':'')+v.toFixed(dy)+'°',px-16,Y);
 }
 ctx.fillStyle='#8393b0';ctx.font='20px -apple-system,system-ui,sans-serif';
 ctx.textAlign='center';ctx.textBaseline='alphabetic';
-ctx.fillText('Azimuth offset from target',px+pw/2,H-8);
-ctx.save();ctx.translate(24,py+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='middle';ctx.fillText('Altitude offset from target',0,0);ctx.restore();
+const axLabels=(document.getElementById('mountMode').value==='eq')?['Sky-fixed frame X offset from target','Sky-fixed frame Y offset from target']:['Azimuth offset from target','Altitude offset from target'];
+ctx.fillText(axLabels[0],px+pw/2,H-8);
+ctx.save();ctx.translate(24,py+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='middle';ctx.fillText(axLabels[1],0,0);ctx.restore();
 // sky area: everything below is clipped to it
 ctx.save();ctx.beginPath();ctx.rect(px,py,pw,ph);ctx.clip();
 ctx.fillStyle='rgba(200,200,200,0.28)';ctx.strokeStyle='rgba(215,215,215,0.7)';ctx.lineWidth=2;
@@ -646,18 +685,45 @@ ctx.strokeStyle='#2a3a5c';ctx.lineWidth=2;ctx.strokeRect(px,py,pw,ph);
 return counts;
 }
 
+function longestCleanRun(flags,stepMs,originMs){
+let bestLen=0,bestStart=0,curLen=0,curStart=0;
+for(let i=0;i<flags.length;i++){
+if(!flags[i]){ if(curLen===0) curStart=i; curLen++; if(curLen>bestLen){bestLen=curLen;bestStart=curStart;} }
+else curLen=0;
+}
+if(bestLen===0) return null;
+return {startMs:originMs+bestStart*stepMs,endMs:originMs+(bestStart+bestLen)*stepMs,frames:bestLen};
+}
 function drawFrameStrip(){
 const c=document.getElementById('frameStrip'),ctx=c.getContext('2d');
-const W=c.width,H=c.height;
+const W=c.width,H=c.height,cap=document.getElementById('frameCaption'),longCap=document.getElementById('longCaption');
 ctx.fillStyle='#0b1220';ctx.fillRect(0,0,W,H);
-const flags=frameFlags(FOV_PASSES,ACTIVE_START,ACTIVE_END,ACTIVE_EXP),n=flags.length;
-const cap=document.getElementById('frameCaption');
-if(!n){cap.textContent='Session is shorter than one exposure.';return;}
-const bw=W/n;
-flags.forEach((bad,i)=>{ctx.fillStyle=bad?'#f87171':'#2fbf8f';ctx.fillRect(i*bw,0,Math.max(1,bw-(bw>3?1:0)),H);});
-const bad=flags.filter(Boolean).length;
 const t=ms=>new Date(ms).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-cap.textContent=`Frame map, ${t(ACTIVE_START)} to ${t(ACTIVE_END)}: one bar per ${ACTIVE_EXP}s sub. ${n-bad} kept (green), ${bad} rejected (red).`;
+const haveNight=NIGHT_START!==null&&NIGHT_END!==null;
+const spanStart=haveNight?NIGHT_START:ACTIVE_START, spanEnd=haveNight?NIGHT_END:ACTIVE_END;
+const flags=frameFlags(FOV_PASSES,spanStart,spanEnd,ACTIVE_EXP), n=flags.length;
+if(!n){cap.textContent='This window is shorter than one exposure.';longCap.textContent='';return;}
+const bw=W/n;
+flags.forEach((bad,i)=>{ctx.fillStyle=bad?'#f87171':'#2fbf8f';ctx.fillRect(i*bw,10,Math.max(1,bw-(bw>3?1:0)),H-10);});
+const bad=flags.filter(Boolean).length;
+if(haveNight){
+const toX=ms=>((ms-spanStart)/(spanEnd-spanStart))*W;
+const bx1=toX(ACTIVE_START),bx2=toX(ACTIVE_END);
+ctx.fillStyle='rgba(255,255,255,0.16)';ctx.fillRect(bx1,10,Math.max(1,bx2-bx1),H-10);
+ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(bx1,0);ctx.lineTo(bx1,H);ctx.moveTo(bx2,0);ctx.lineTo(bx2,H);ctx.stroke();
+ctx.fillStyle='#fff';ctx.font='11px -apple-system,system-ui,sans-serif';ctx.textAlign='left';ctx.fillText('your window',Math.min(bx1+3,W-70),9);
+const run=longestCleanRun(flags,ACTIVE_EXP*1000,spanStart);
+if(run){
+const rx1=toX(run.startMs),rx2=toX(run.endMs);
+ctx.fillStyle='#8ef0c8';ctx.fillRect(rx1,0,Math.max(1,rx2-rx1),6);
+const mins=Math.round((run.endMs-run.startMs)/60000),h=Math.floor(mins/60),m=mins%60;
+longCap.textContent=`Longest satellite-free stretch tonight (astronomical twilight to twilight): ${t(run.startMs)}–${t(run.endMs)} (${h?h+'h ':''}${m}m, ${run.frames} subs at ${ACTIVE_EXP}s) — marked in mint above the strip.`;
+}else{ longCap.textContent='No satellite-free stretch of even one sub-exposure was found this night at this exposure length.'; }
+cap.textContent=`Full night, dusk to dawn (astronomical twilight): ${t(spanStart)}–${t(spanEnd)}. ${n-bad} of ${n} subs kept, ${bad} rejected, at ${ACTIVE_EXP}s each.`;
+}else{
+longCap.textContent='No astronomical darkness at this location/date — showing your selected window only.';
+cap.textContent=`${t(spanStart)}–${t(spanEnd)}: ${n-bad} kept (green), ${bad} rejected (red), at ${ACTIVE_EXP}s each.`;
+}
 }
 
 function frameFlags(passes,ws,we,exp){
@@ -685,12 +751,20 @@ if(!(WIN_END>WIN_START)){alert('End time must be after start time');return;}
 const sats=parseTLEBlock(document.getElementById('tle').value);
 if(sats.length===0){alert('No valid TLE sets found — wait for the fetch, or paste at least one 3-line TLE set.');return;}
 const {raHr,decDeg}=altAzToRaDec(WIN_START,azDeg,altDeg,LAT,LON);
+const mountMode=document.getElementById('mountMode').value;
+const q0=mountMode==='eq'?parallacticAngle(WIN_START,raHr,decDeg,LAT,LON):0;
 let stepSec=Math.max(2,Math.min(10,expSec/4));
 if(sats.length>6000) stepSec=Math.max(stepSec,15);
 else if(sats.length>2000) stepSec=Math.max(stepSec,8);
 const skyW=FOVW*SKY_FACTOR, skyH=FOVH*SKY_FACTOR;
-const superStart=new Date(WIN_START.getTime()-65*60000);
-const superEnd=new Date(WIN_END.getTime()+65*60000);
+const twi=findTwilightBounds(WIN_START.getTime(),LAT,LON);
+let superStart,superEnd;
+if(twi){ NIGHT_START=Math.min(twi.dusk,WIN_START.getTime()-65*60000); NIGHT_END=Math.max(twi.dawn,WIN_END.getTime()+65*60000);
+superStart=new Date(NIGHT_START); superEnd=new Date(NIGHT_END); }
+else { NIGHT_START=null; NIGHT_END=null;
+superStart=new Date(WIN_START.getTime()-65*60000); superEnd=new Date(WIN_END.getTime()+65*60000); }
+if(sats.length>6000) stepSec=Math.max(stepSec,25);
+else if(sats.length>2000) stepSec=Math.max(stepSec,12);
 
 const btn=document.getElementById('runBtn');
 btn.disabled=true; btn.textContent='Running…';
@@ -699,7 +773,8 @@ const bar=document.getElementById('progBar'), txt=document.getElementById('progT
 bar.style.width='0%'; txt.textContent='Starting…';
 
 const res=await computeAllPasses(sats,superStart,superEnd,stepSec,LAT,LON,raHr,decDeg,FOVW,FOVH,skyW,skyH,
-(done,total)=>{const pct=Math.round(done/total*100);bar.style.width=pct+'%';txt.textContent=`Scanning satellites: ${done.toLocaleString()} / ${total.toLocaleString()} (${pct}%)`;}
+(done,total)=>{const pct=Math.round(done/total*100);bar.style.width=pct+'%';txt.textContent=`Scanning satellites: ${done.toLocaleString()} / ${total.toLocaleString()} (${pct}%), ${((superEnd-superStart)/3600000).toFixed(1)}h window`;},
+mountMode,q0
 );
 PASSES_DISPLAY=res.displayPasses; FOV_PASSES=res.fovPasses;
 
@@ -774,12 +849,34 @@ document.getElementById('exp').value=e;
 redrawAndStats();renderShiftTable();
 }
 
+const SAT_FAMILIES=[
+[/^STARLINK/i,{op:'SpaceX (USA)',purpose:'Broadband internet megaconstellation',since:'2019–present, still expanding',alt:'~340–550 km'}],
+[/^ONEWEB/i,{op:'Eutelsat OneWeb (UK/France)',purpose:'Broadband internet constellation',since:'2019–2023, constellation complete',alt:'~1,200 km'}],
+[/^KUIPER/i,{op:'Amazon (USA)',purpose:'Project Kuiper broadband megaconstellation',since:'2023–present, early deployment',alt:'~590–630 km'}],
+[/^(QIANFAN|SPACESAIL|G60)/i,{op:'Shanghai Spacecom (China)',purpose:'Qianfan ("Thousand Sails") broadband megaconstellation',since:'2024–present, early deployment',alt:'~800–1,100 km'}],
+[/^IRIDIUM/i,{op:'Iridium Communications (USA)',purpose:'Global satellite phone/data constellation',since:'Current "NEXT" generation since 2017',alt:'~780 km'}],
+[/^GLOBALSTAR/i,{op:'Globalstar Inc (USA)',purpose:'Satellite phone/data communications',since:'Current generation since 2010',alt:'~1,400 km'}],
+[/^(GPS|NAVSTAR)/i,{op:'US Space Force',purpose:'GPS satellite navigation',since:'1978–present',alt:'~20,200 km (MEO)'}],
+[/^(GLONASS|COSMOS)/i,{op:'Roscosmos (Russia)',purpose:'GLONASS navigation, or another Cosmos-series mission — "Cosmos" is a generic Russian designation used since 1962 for many mission types',since:'Varies by satellite',alt:'Varies by mission'}],
+[/^(ISS|ZARYA)/i,{op:'NASA / Roscosmos / ESA / JAXA / CSA',purpose:'Crewed research space station',since:'Launched 1998, continuously crewed since 2000',alt:'~420 km'}],
+[/^(HST|HUBBLE)/i,{op:'NASA / ESA',purpose:'Space telescope',since:'1990',alt:'~535 km'}],
+[/^NOAA/i,{op:'NOAA (USA)',purpose:'Weather and environmental monitoring',since:'Varies by satellite',alt:'~830–870 km, polar'}],
+[/^CALSPHERE/i,{op:'US Air Force',purpose:'Passive geodetic/radar calibration sphere',since:'Mid-1960s launches',alt:'~1,000–1,100 km'}],
+[/^LCS/i,{op:'US Air Force / MIT Lincoln Laboratory',purpose:'Lincoln Calibration Sphere — passive radar calibration target',since:'Late 1960s–1971 launches',alt:'Varies, ~800–2,800 km'}],
+];
+function satInfo(name){for(const [re,info] of SAT_FAMILIES) if(re.test(name)) return info; return null;}
 function renderSatTable(){
 const inWin=FOV_PASSES.filter(p=>p.tIn<ACTIVE_END && p.tOut>ACTIVE_START);
 let html='<tr><th>Satellite</th><th>Enter FOV</th><th>Exit FOV</th><th>Duration</th></tr>';
 inWin.sort((a,b)=>a.tIn-b.tIn).forEach(p=>{
-const hi=String(p.satnum)===HIGHLIGHT_SATNUM?'hi':'';
-html+=`<tr class="${hi}" data-clk onclick="highlightSat('${p.satnum}')"><td><span class="dot" style="background:${COLORS[p.cls]}"></span>${p.name}</td><td>${new Date(p.tIn).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${new Date(p.tOut).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${((p.tOut-p.tIn)/1000).toFixed(0)}s</td></tr>`;
+const isHi=String(p.satnum)===HIGHLIGHT_SATNUM;
+html+=`<tr class="${isHi?'hi':''}" data-clk onclick="highlightSat('${p.satnum}')"><td><span class="dot" style="background:${COLORS[p.cls]}"></span>${p.name}</td><td>${new Date(p.tIn).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${new Date(p.tOut).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</td><td>${((p.tOut-p.tIn)/1000).toFixed(0)}s</td></tr>`;
+if(isHi){
+const info=satInfo(p.name);
+const body=info?`<b>Operator:</b> ${info.op} &nbsp;·&nbsp; <b>Purpose:</b> ${info.purpose}<br><b>Active since:</b> ${info.since} &nbsp;·&nbsp; <b>Typical altitude:</b> ${info.alt}<br><span style="color:var(--muted)">General info for this satellite family, not verified per-object data.</span>`
+:`<span style="color:var(--muted)">No family info recognized from this name. NORAD catalog number ${p.satnum} can be looked up at celestrak.org or n2yo.com for exact details.</span>`;
+html+=`<tr class="infoRow"><td colspan="4"><b>${p.name}</b> — NORAD ${p.satnum}<br>${body}</td></tr>`;
+}
 });
 document.getElementById('satTbl').innerHTML=html || '<tr><td>No satellites crossed the FOV in this window.</td></tr>';
 }
