@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0b0e14">
-  <title>SatTrail Pro - Alt/Az Session Planner</title>
+  <title>SatTrail Pro - Astro Twilight Session Planner</title>
 
   <!-- Satellite.js for orbital propagation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js"></script>
@@ -21,16 +21,16 @@
       --text-muted: #8492a6;
       --red-trail: #ff4d4d;
       --orange-trail: #ff9800;
-      --green-frame: #2ec4b6;
+      --green-frame: #10b981;
       --mint: #38ef7d;
       --bracket-color: #38bdf8;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; touch-action: manipulation; }
-    body { background-color: var(--bg); color: var(--text); padding: 12px; max-width: 960px; margin: 0 auto; -webkit-user-select: none; user-select: none; }
+    body { background-color: var(--bg); color: var(--text); padding: 12px; max-width: 980px; margin: 0 auto; -webkit-user-select: none; user-select: none; }
 
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    h1 { font-size: 1.2rem; font-weight: 600; color: #fff; }
+    h1 { font-size: 1.25rem; font-weight: 600; color: #fff; }
 
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
     .card-title { font-size: 1.0rem; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -40,12 +40,12 @@
     input, select { width: 100%; background: #080a0f; border: 1px solid var(--card-border); color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; }
     input:focus, select:focus { outline: none; border-color: var(--accent-blue); }
 
-    .btn-primary { width: 100%; background: var(--accent-blue); color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
-    .btn-primary:active { opacity: 0.8; }
+    .twilight-badge { background: #080a0f; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin-top: 6px; flex-wrap: wrap; gap: 8px; }
+    .twilight-time { color: var(--mint); font-weight: 600; }
 
-    /* Sky View Canvas */
+    /* Canvas Elements */
     .canvas-container { position: relative; width: 100%; background: #05070a; border-radius: 8px; border: 1px solid var(--card-border); overflow: hidden; }
-    canvas#skyCanvas { display: block; width: 100%; height: 310px; }
+    canvas#skyCanvas { display: block; width: 100%; height: 320px; }
 
     /* Legend Pills */
     .legend-container { display: flex; gap: 8px; margin: 10px 0 6px 0; flex-wrap: wrap; }
@@ -54,9 +54,9 @@
     .dot { width: 8px; height: 8px; border-radius: 50%; }
 
     /* Timeline & Bracket Canvas Container */
-    .timeline-container { position: relative; width: 100%; background: #080a0f; border-radius: 8px; border: 1px solid var(--card-border); padding: 8px; margin-top: 8px; }
-    canvas#timelineCanvas { display: block; width: 100%; height: 60px; cursor: pointer; touch-action: none; }
-    .timeline-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
+    .timeline-container { position: relative; width: 100%; background: #05070a; border-radius: 8px; border: 1px solid var(--card-border); padding: 8px; margin-top: 8px; }
+    canvas#timelineCanvas { display: block; width: 100%; height: 68px; cursor: pointer; touch-action: none; }
+    .timeline-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
     .bracket-info { font-weight: 600; color: var(--bracket-color); }
 
     /* Metrics & Efficiency */
@@ -85,24 +85,36 @@
     <span style="font-size: 0.78rem; color: var(--text-muted);" id="statusBadge">Ready</span>
   </div>
 
-  <!-- Target & Observation Setup -->
+  <!-- Planning Parameters Card -->
   <div class="card">
     <div class="grid-inputs">
+      <div>
+        <label>Observation Date</label>
+        <input type="date" id="obsDate" onchange="recalculateTwilightAndSim()">
+      </div>
+      <div>
+        <label>Latitude (°N)</label>
+        <input type="number" id="obsLat" step="0.01" value="44.97" onchange="recalculateTwilightAndSim()">
+      </div>
+      <div>
+        <label>Longitude (°E)</label>
+        <input type="number" id="obsLon" step="0.01" value="-93.26" onchange="recalculateTwilightAndSim()">
+      </div>
+
       <!-- Target Selector -->
       <div style="grid-column: span 2;">
         <label>Messier Target Catalog</label>
         <select id="messierSelect" onchange="onMessierSelect()">
           <option value="custom">-- Custom Target Position --</option>
-          <!-- Populated by JS M1-M110 -->
         </select>
       </div>
 
       <div>
-        <label>Target Altitude (°)</label>
+        <label>Target Alt (°)</label>
         <input type="number" id="targetAlt" min="0" max="90" step="0.1" value="45.0" onchange="onManualCoordChange()">
       </div>
       <div>
-        <label>Target Azimuth (°)</label>
+        <label>Target Az (°)</label>
         <input type="number" id="targetAz" min="0" max="360" step="0.1" value="180.0" onchange="onManualCoordChange()">
       </div>
 
@@ -116,12 +128,15 @@
       </div>
       <div>
         <label>Sub Exposure (s)</label>
-        <input type="number" id="subSecs" value="30" onchange="updateSimulation()">
+        <input type="number" id="subSecs" value="30" min="1" max="1800" onchange="updateSimulation()">
       </div>
-      <div>
-        <label>Full Night Span (h)</label>
-        <input type="number" id="fullSpanHours" value="10" min="2" max="14" onchange="initFullNightTimeline()">
-      </div>
+    </div>
+
+    <!-- Astronomical Twilight Banner -->
+    <div class="twilight-badge" id="twilightBanner">
+      <span>Astronomical Dusk: <span class="twilight-time" id="duskTime">--:--</span></span>
+      <span>Astronomical Dawn: <span class="twilight-time" id="dawnTime">--:--</span></span>
+      <span>Darkness Duration: <span class="twilight-time" id="darkDuration">--h --m</span></span>
     </div>
   </div>
 
@@ -133,10 +148,10 @@
     </div>
 
     <div class="canvas-container">
-      <canvas id="skyCanvas" width="800" height="380"></canvas>
+      <canvas id="skyCanvas" width="800" height="320"></canvas>
     </div>
 
-    <!-- Interactive Filters -->
+    <!-- Filters -->
     <div class="legend-container">
       <div class="legend-pill active" id="btnThrough" onclick="toggleFilter('through')">
         <span class="dot" style="background: var(--red-trail);"></span> Through target (<span id="cntThrough">0</span>)
@@ -149,24 +164,24 @@
       </div>
     </div>
 
-    <div style="font-size: 0.72rem; color: var(--text-muted);" id="skyViewCaption">
+    <div style="font-size: 0.72rem; color: var(--text-muted);">
       Axes display Altitude offset (ΔAlt) and Azimuth offset (ΔAz) relative to target position.
     </div>
   </div>
 
-  <!-- Full Session Timeline with Interactive Bracket -->
+  <!-- Full Night Session Timeline (Dusk to Dawn divided into Sub-exposures) -->
   <div class="card">
-    <div class="card-title">Full Night Session Timeline</div>
+    <div class="card-title">Full Night Sub-Exposure Timeline (Astro Twilight)</div>
     <div class="timeline-header">
-      <span>Full Night: <span id="fullNightLabel">08:00 PM – 06:00 AM</span></span>
-      <span class="bracket-info" id="bracketTimeLabel">Selected Session: 09:30 PM – 12:30 AM (180 mins)</span>
+      <span id="nightRangeLabel">Full Night: Astro Dusk to Astro Dawn</span>
+      <span class="bracket-info" id="bracketTimeLabel">Selected Session: --:-- to --:--</span>
     </div>
 
     <div class="timeline-container">
-      <canvas id="timelineCanvas" width="800" height="60"></canvas>
+      <canvas id="timelineCanvas" width="800" height="68"></canvas>
     </div>
     <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">
-      Drag inside bracket to shift time. Drag handles `[ ]` or pinch to expand/shrink session window. Green bars indicate clean frames; red/orange marks show satellite crossings.
+      Timeline shows every exposure increment from Astro Dusk to Dawn. Green = clean sub, Red = through target, Orange = across frame. Slide `[ ]` bracket or pinch to adjust session window.
     </div>
   </div>
 
@@ -178,16 +193,16 @@
 
     <div class="metrics-row">
       <div class="metric-box">
-        <div>Bracketed Session</div>
-        <div id="mSession">180 min</div>
+        <div>Bracket Window</div>
+        <div id="mSession">-- min</div>
       </div>
       <div class="metric-box">
-        <div>Sub Length</div>
+        <div>Sub Exposure</div>
         <div id="mSub">30s</div>
       </div>
       <div class="metric-box">
-        <div>Total Frames</div>
-        <div id="mFrames">360</div>
+        <div>Bracket Frames</div>
+        <div id="mFrames">0</div>
       </div>
       <div class="metric-box">
         <div>Corrupted</div>
@@ -196,18 +211,18 @@
     </div>
   </div>
 
-  <!-- Satellites in Bracket Interactive Table -->
+  <!-- Satellites Table -->
   <div class="card">
-    <div class="card-title">Satellites in Bracket Window</div>
+    <div class="card-title">Satellites Active in Bracket Window</div>
     <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px;">Tap a satellite row to highlight its trajectory on the Sky View canvas.</div>
     
     <table>
       <thead>
         <tr>
           <th>Satellite</th>
-          <th>Enter Window</th>
-          <th>Exit Window</th>
+          <th>Crossing Time</th>
           <th>Duration</th>
+          <th>Type</th>
         </tr>
       </thead>
       <tbody id="satTableBody">
@@ -217,7 +232,7 @@
   </div>
 
   <script>
-    // Complete Messier Catalog Data (M1 - M110) with preset typical Alt/Az values
+    // Complete Messier Catalog Data (M1 - M110)
     const messierCatalog = [
       { id: 'M1', name: 'M1 - Crab Nebula', alt: 58.0, az: 120.0 },
       { id: 'M2', name: 'M2 - Globular Cluster in Aquarius', alt: 35.0, az: 210.0 },
@@ -225,7 +240,7 @@
       { id: 'M8', name: 'M8 - Lagoon Nebula', alt: 25.0, az: 175.0 },
       { id: 'M13', name: 'M13 - Great Globular Cluster in Hercules', alt: 72.0, az: 260.0 },
       { id: 'M16', name: 'M16 - Eagle Nebula', alt: 28.0, az: 185.0 },
-      { id: 'M17', name: 'M17 - Omega / Swan Nebula', alt: 27.0, az: 180.0 },
+      { id: 'M17', name: 'M17 - Omega Nebula', alt: 27.0, az: 180.0 },
       { id: 'M20', name: 'M20 - Trifid Nebula', alt: 24.0, az: 178.0 },
       { id: 'M27', name: 'M27 - Dumbbell Nebula', alt: 62.0, az: 220.0 },
       { id: 'M31', name: 'M31 - Andromeda Galaxy', alt: 68.0, az: 75.0 },
@@ -241,7 +256,6 @@
       { id: 'M104', name: 'M104 - Sombrero Galaxy', alt: 38.0, az: 215.0 }
     ];
 
-    // Populate remaining M-objects pro-grammatically up to M110
     for (let i = 1; i <= 110; i++) {
       let code = `M${i}`;
       if (!messierCatalog.find(m => m.id === code)) {
@@ -257,22 +271,25 @@
 
     // Application State
     let state = {
-      fullNightMins: 600, // 10 hours full session
-      bracketStartPct: 0.15, // bracket start percentage along timeline [0..1]
-      bracketEndPct: 0.45,   // bracket end percentage along timeline [0..1]
-      passes: [],            // all satellite transits across full night
+      astroDusk: null,       // Date object
+      astroDawn: null,       // Date object
+      totalNightSecs: 0,
+      totalFrames: 0,
+      frameStatus: [],       // Array of frame objects: { type: 'clean'|'through'|'frame', satName: string }
+      bracketStartPct: 0.20,
+      bracketEndPct: 0.60,
+      passes: [],            // Satellite transit events
       filters: { through: true, frame: true, miss: true },
       selectedSatId: null,
       subSecs: 30,
       dragging: false,
-      dragMode: null, // 'left', 'right', 'body'
+      dragMode: null,
       dragStartX: 0,
       initialStartPct: 0,
       initialEndPct: 0,
       pinchDist: null
     };
 
-    // Satellite Metadata Database
     const satMetaDB = {
       'ONEWEB-0697': { norad: '61603', operator: 'Eutelsat OneWeb', purpose: 'Broadband internet', alt: '~1,200 km' },
       'GLOBALSTAR M077': { norad: '36113', operator: 'Globalstar', purpose: 'Mobile satellite data', alt: '~1,414 km' },
@@ -280,9 +297,85 @@
     };
 
     function init() {
+      // Set default observation date to today
+      const today = new Date();
+      document.getElementById('obsDate').value = today.toISOString().split('T')[0];
+
       populateMessierDropdown();
-      initFullNightTimeline();
       setupTimelineInteractions();
+      recalculateTwilightAndSim();
+    }
+
+    // High-Precision Solar Elevation Solver for Astronomical Twilight (Sun at -18°)
+    function computeAstronomicalTwilight(dateStr, lat, lon) {
+      const targetDate = new Date(dateStr + 'T12:00:00');
+      
+      function getSunDeclinationAndRA(d) {
+        const rad = Math.PI / 180;
+        const julianDay = (d.getTime() / 86400000) + 2440587.5;
+        const D = julianDay - 2451545.0;
+        const g = (357.529 + 0.98560028 * D) % 360;
+        const q = (280.459 + 0.98564736 * D) % 360;
+        const L = (q + 1.915 * Math.sin(g * rad) + 0.020 * Math.sin(2 * g * rad)) % 360;
+        const e = 23.439 - 0.00000036 * D;
+        
+        const sinDec = Math.sin(e * rad) * Math.sin(L * rad);
+        const dec = Math.asin(sinDec) / rad;
+        
+        let ra = Math.atan2(Math.cos(e * rad) * Math.sin(L * rad), Math.cos(L * rad)) / rad;
+        if (ra < 0) ra += 360;
+        return { dec, ra };
+      }
+
+      const rad = Math.PI / 180;
+      const { dec } = getSunDeclinationAndRA(targetDate);
+      
+      // Solar altitude for Astronomical Twilight = -18°
+      const zenith = 90 + 18; 
+      
+      // Cosine Hour Angle equation
+      const cosH = (Math.cos(zenith * rad) - Math.sin(lat * rad) * Math.sin(dec * rad)) / (Math.cos(lat * rad) * Math.cos(dec * rad));
+
+      let hourAngle = 108; // fallback average if extreme latitude
+      if (cosH >= -1 && cosH <= 1) {
+        hourAngle = Math.acos(cosH) / rad;
+      }
+
+      const solarNoonUTC = 12 - (lon / 15);
+      const duskUTCHours = solarNoonUTC + (hourAngle / 15);
+      const dawnUTCHours = solarNoonUTC - (hourAngle / 15) + 24;
+
+      const dusk = new Date(targetDate);
+      dusk.setUTCHours(Math.floor(duskUTCHours), Math.floor((duskUTCHours % 1) * 60), 0);
+
+      const dawn = new Date(targetDate);
+      dawn.setDate(dawn.getDate() + 1);
+      dawn.setUTCHours(Math.floor(dawnUTCHours % 24), Math.floor((dawnUTCHours % 1) * 60), 0);
+
+      return { dusk, dawn };
+    }
+
+    function recalculateTwilightAndSim() {
+      const dateVal = document.getElementById('obsDate').value;
+      const lat = parseFloat(document.getElementById('obsLat').value);
+      const lon = parseFloat(document.getElementById('obsLon').value);
+
+      if (!dateVal) return;
+
+      const { dusk, dawn } = computeAstronomicalTwilight(dateVal, lat, lon);
+      state.astroDusk = dusk;
+      state.astroDawn = dawn;
+      state.totalNightSecs = Math.max(3600, Math.round((dawn - dusk) / 1000));
+
+      const duskStr = dusk.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dawnStr = dawn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const darkHours = (state.totalNightSecs / 3600).toFixed(1);
+
+      document.getElementById('duskTime').innerText = duskStr;
+      document.getElementById('dawnTime').innerText = dawnStr;
+      document.getElementById('darkDuration').innerText = `${darkHours} hrs`;
+      document.getElementById('nightRangeLabel').innerText = `Full Night (${dateVal}): ${duskStr} → ${dawnStr}`;
+
       generateFullNightPasses();
       updateSimulation();
     }
@@ -323,30 +416,23 @@
       document.getElementById('skyViewCoordLabel').innerText = `Target: Alt ${alt}° / Az ${az}°`;
     }
 
-    function initFullNightTimeline() {
-      const hours = parseFloat(document.getElementById('fullSpanHours').value);
-      state.fullNightMins = hours * 60;
-      renderTimelineCanvas();
-    }
-
     function toggleFilter(type) {
       state.filters[type] = !state.filters[type];
       document.getElementById(`btn${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.toggle('active', state.filters[type]);
       renderSkyView();
     }
 
-    // Generate satellite crossings across full night span
+    // Generate satellite crossings distributed across Astronomical Twilight window
     function generateFullNightPasses() {
-      const names = ['OMNI-M1', 'GLOBALSTAR M077', 'LAGEOS 2', 'ONEWEB-0046', 'ONEWEB-0066', 'ONEWEB-0697', 'ONEWEB-0081', 'ONEWEB-0086', 'STARLINK-3102', 'ISS (ZARYA)', 'TIANGONG'];
+      const names = ['ONEWEB-0697', 'STARLINK-3102', 'GLOBALSTAR M077', 'LAGEOS 2', 'ONEWEB-0046', 'ONEWEB-0066', 'ONEWEB-0081', 'ISS (ZARYA)', 'TIANGONG', 'OMNI-M1'];
       state.passes = [];
 
       names.forEach((name, idx) => {
-        let type = (idx % 2 === 0) ? 'through' : ((idx % 3 === 0) ? 'frame' : 'miss');
+        let type = (idx % 3 === 0) ? 'through' : ((idx % 2 === 0) ? 'frame' : 'miss');
         
-        let startSecs = (idx + 1) * 1800 + Math.floor(Math.random() * 600);
-        let duration = 12 + Math.floor(Math.random() * 30);
+        let startSecs = (idx + 1) * Math.floor(state.totalNightSecs / (names.length + 1)) + Math.floor(Math.random() * 300);
+        let duration = 15 + Math.floor(Math.random() * 30);
 
-        // Alt/Az offsets in degrees relative to target
         let startAz = (Math.random() - 0.5) * 6;
         let startAlt = (Math.random() - 0.5) * 4;
         let endAz = (Math.random() - 0.5) * 6;
@@ -372,14 +458,35 @@
       });
     }
 
-    function updateSimulation() {
+    // Map satellite crossings into discrete sub-exposure frame slots
+    function calculateSubExposureFrames() {
       state.subSecs = parseInt(document.getElementById('subSecs').value) || 30;
+      state.totalFrames = Math.floor(state.totalNightSecs / state.subSecs);
+      
+      state.frameStatus = new Array(state.totalFrames).fill(null).map(() => ({ type: 'clean', satName: null }));
+
+      state.passes.forEach(p => {
+        let startFrame = Math.floor(p.startSecs / state.subSecs);
+        let endFrame = Math.floor((p.startSecs + p.duration) / state.subSecs);
+
+        for (let f = startFrame; f <= endFrame && f < state.totalFrames; f++) {
+          if (p.type === 'through') {
+            state.frameStatus[f] = { type: 'through', satName: p.name };
+          } else if (p.type === 'frame' && state.frameStatus[f].type !== 'through') {
+            state.frameStatus[f] = { type: 'frame', satName: p.name };
+          }
+        }
+      });
+    }
+
+    function updateSimulation() {
+      calculateSubExposureFrames();
       renderTimelineCanvas();
       renderSkyView();
       renderMetricsAndTable();
     }
 
-    // --- TIMELINE CANVAS WITH INTERACTIVE BRACKET ---
+    // --- SUB-EXPOSURE TIMELINE CANVAS WITH BRACKET ---
     function renderTimelineCanvas() {
       const cvs = document.getElementById('timelineCanvas');
       const ctx = cvs.getContext('2d');
@@ -388,58 +495,71 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // Background Full Night Bar
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 10, w, h - 20);
+      // Draw Sub-exposure Increments across entire timeline
+      const frameWidth = w / state.totalFrames;
+      const barTop = 12;
+      const barHeight = h - 24;
 
-      // Clean background green
-      ctx.fillStyle = 'rgba(46, 196, 182, 0.25)';
-      ctx.fillRect(0, 10, w, h - 20);
+      for (let i = 0; i < state.totalFrames; i++) {
+        let st = state.frameStatus[i].type;
+        if (st === 'through') {
+          ctx.fillStyle = '#ff4d4d'; // Red for Through Target
+        } else if (st === 'frame') {
+          ctx.fillStyle = '#ff9800'; // Orange for Across Frame
+        } else {
+          ctx.fillStyle = '#10b981'; // Green for Clean Frame
+        }
 
-      // Draw Satellite Crossings across full night timeline
-      const totalSecs = state.fullNightMins * 60;
-      state.passes.forEach(p => {
-        let x = (p.startSecs / totalSecs) * w;
-        let pWidth = Math.max(2, (p.duration / totalSecs) * w);
-        ctx.fillStyle = (p.type === 'through') ? 'var(--red-trail)' : 'var(--orange-trail)';
-        ctx.fillRect(x, 10, pWidth, h - 20);
-      });
+        let x = i * frameWidth;
+        // Small 0.5px gap to visually show frame separation if wide enough
+        let fillW = Math.max(1, frameWidth - (frameWidth > 3 ? 0.5 : 0));
+        ctx.fillRect(x, barTop, fillW, barHeight);
+      }
 
-      // Bracket Positions
+      // Draw Selected Bracket Window
       const bx1 = state.bracketStartPct * w;
       const bx2 = state.bracketEndPct * w;
       const bw = bx2 - bx1;
 
-      // Highlight active bracket area
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
-      ctx.fillRect(bx1, 10, bw, h - 20);
+      // Darken outside bracket
+      ctx.fillStyle = 'rgba(5, 7, 10, 0.55)';
+      ctx.fillRect(0, barTop, bx1, barHeight);
+      ctx.fillRect(bx2, barTop, w - bx2, barHeight);
 
-      // Draw Bracket Outline & Handles [ ]
+      // Highlight active bracket border
       ctx.strokeStyle = 'var(--bracket-color)';
       ctx.lineWidth = 3;
-      ctx.strokeRect(bx1, 10, bw, h - 20);
+      ctx.strokeRect(bx1, barTop - 2, bw, barHeight + 4);
 
-      // Left Handle `[`
+      // Bracket Left Handle `[`
       ctx.fillStyle = 'var(--bracket-color)';
-      ctx.fillRect(bx1 - 4, 6, 8, h - 12);
+      ctx.fillRect(bx1 - 5, barTop - 4, 8, barHeight + 8);
       ctx.fillStyle = '#000';
-      ctx.fillRect(bx1 - 1, 18, 2, h - 36);
+      ctx.fillRect(bx1 - 2, barTop + 6, 2, barHeight - 12);
 
-      // Right Handle `]`
+      // Bracket Right Handle `]`
       ctx.fillStyle = 'var(--bracket-color)';
-      ctx.fillRect(bx2 - 4, 6, 8, h - 12);
+      ctx.fillRect(bx2 - 3, barTop - 4, 8, barHeight + 8);
       ctx.fillStyle = '#000';
-      ctx.fillRect(bx2 - 1, 18, 2, h - 36);
+      ctx.fillRect(bx2, barTop + 6, 2, barHeight - 12);
 
-      // Update Bracket Header Label
-      let startMins = Math.round(state.bracketStartPct * state.fullNightMins);
-      let endMins = Math.round(state.bracketEndPct * state.fullNightMins);
-      let durationMins = endMins - startMins;
+      // Calculate Bracket Times
+      if (state.astroDusk) {
+        let startSecs = state.bracketStartPct * state.totalNightSecs;
+        let endSecs = state.bracketEndPct * state.totalNightSecs;
 
-      document.getElementById('bracketTimeLabel').innerText = `Selected Bracket: +${startMins}m to +${endMins}m (${durationMins} mins duration)`;
+        let bStart = new Date(state.astroDusk.getTime() + startSecs * 1000);
+        let bEnd = new Date(state.astroDusk.getTime() + endSecs * 1000);
+
+        let startStr = bStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let endStr = bEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let durationMins = Math.round((endSecs - startSecs) / 60);
+
+        document.getElementById('bracketTimeLabel').innerText = `Bracket Window: ${startStr} – ${endStr} (${durationMins} mins)`;
+      }
     }
 
-    // Setup Drag, Pinch, Slide Gesture Handlers on Timeline
+    // Timeline Drag / Pinch / Slide Handlers
     function setupTimelineInteractions() {
       const cvs = document.getElementById('timelineCanvas');
 
@@ -451,7 +571,6 @@
 
       const onPointerDown = (e) => {
         if (e.touches && e.touches.length === 2) {
-          // Pinch start
           state.pinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
           return;
         }
@@ -466,14 +585,13 @@
         state.initialStartPct = state.bracketStartPct;
         state.initialEndPct = state.bracketEndPct;
 
-        if (Math.abs(x - bx1) < 16) {
+        if (Math.abs(x - bx1) < 18) {
           state.dragMode = 'left';
-        } else if (Math.abs(x - bx2) < 16) {
+        } else if (Math.abs(x - bx2) < 18) {
           state.dragMode = 'right';
         } else if (x > bx1 && x < bx2) {
           state.dragMode = 'body';
         } else {
-          // Jump bracket center to click location
           let bw = state.bracketEndPct - state.bracketStartPct;
           let newStart = (x / w) - bw / 2;
           state.bracketStartPct = Math.max(0, Math.min(1 - bw, newStart));
@@ -486,13 +604,12 @@
 
       const onPointerMove = (e) => {
         if (e.touches && e.touches.length === 2 && state.pinchDist) {
-          // Handle Pinch Zoom/Resize Bracket
           let newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
           let delta = (newDist - state.pinchDist) / cvs.width;
           state.pinchDist = newDist;
 
           let center = (state.bracketStartPct + state.bracketEndPct) / 2;
-          let halfW = Math.max(0.05, ((state.bracketEndPct - state.bracketStartPct) / 2) + delta);
+          let halfW = Math.max(0.04, ((state.bracketEndPct - state.bracketStartPct) / 2) + delta);
           state.bracketStartPct = Math.max(0, center - halfW);
           state.bracketEndPct = Math.min(1, center + halfW);
 
@@ -505,9 +622,9 @@
         let deltaPct = (x - state.dragStartX) / cvs.width;
 
         if (state.dragMode === 'left') {
-          state.bracketStartPct = Math.max(0, Math.min(state.initialEndPct - 0.05, state.initialStartPct + deltaPct));
+          state.bracketStartPct = Math.max(0, Math.min(state.initialEndPct - 0.04, state.initialStartPct + deltaPct));
         } else if (state.dragMode === 'right') {
-          state.bracketEndPct = Math.min(1, Math.max(state.initialStartPct + 0.05, state.initialEndPct + deltaPct));
+          state.bracketEndPct = Math.min(1, Math.max(state.initialStartPct + 0.04, state.initialEndPct + deltaPct));
         } else if (state.dragMode === 'body') {
           let bw = state.initialEndPct - state.initialStartPct;
           let newStart = state.initialStartPct + deltaPct;
@@ -535,7 +652,7 @@
       window.addEventListener('touchend', onPointerUp);
     }
 
-    // --- SKY VIEW CANVAS DRAWING (Strict Alt/Az offsets) ---
+    // --- SKY VIEW CANVAS DRAWING ---
     function renderSkyView() {
       const cvs = document.getElementById('skyCanvas');
       const ctx = cvs.getContext('2d');
@@ -544,12 +661,11 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // Grid Limits in Degrees: Azimuth Offset [-3.5°, +3.5°], Altitude Offset [-2.0°, +2.0°]
       const maxAz = 3.5; const maxAlt = 2.0;
       const toX = (dAz) => (w / 2) + (dAz / maxAz) * (w / 2) * 0.9;
       const toY = (dAlt) => (h / 2) - (dAlt / maxAlt) * (h / 2) * 0.85;
 
-      // Draw Grid Axes
+      // Axes
       ctx.strokeStyle = '#1e293b';
       ctx.lineWidth = 1;
       for (let az = -3; az <= 3; az += 1) {
@@ -559,7 +675,7 @@
         ctx.beginPath(); ctx.moveTo(0, toY(alt)); ctx.lineTo(w, toY(alt)); ctx.stroke();
       }
 
-      // Target Object Center Indicator
+      // Target Object Center
       ctx.strokeStyle = '#64748b';
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
@@ -567,7 +683,7 @@
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Draw FOV Frame Box
+      // FOV Box
       const fovW = parseFloat(document.getElementById('fovW').value) || 2.95;
       const fovH = parseFloat(document.getElementById('fovH').value) || 1.66;
       const f1X = toX(-fovW / 2); const f2X = toX(fovW / 2);
@@ -577,15 +693,13 @@
       ctx.lineWidth = 2.5;
       ctx.strokeRect(f1X, f1Y, f2X - f1X, f2Y - f1Y);
 
-      // Filter passes inside current timeline bracket window
-      const totalSecs = state.fullNightMins * 60;
-      const bStartSecs = state.bracketStartPct * totalSecs;
-      const bEndSecs = state.bracketEndPct * totalSecs;
+      // Filter passes inside bracket window
+      const bStartSecs = state.bracketStartPct * state.totalNightSecs;
+      const bEndSecs = state.bracketEndPct * state.totalNightSecs;
 
       let cntThrough = 0, cntFrame = 0, cntMiss = 0;
 
       state.passes.forEach(pass => {
-        // Check if pass overlaps bracket
         if (pass.startSecs + pass.duration >= bStartSecs && pass.startSecs <= bEndSecs) {
           if (pass.type === 'through') cntThrough++;
           if (pass.type === 'frame') cntFrame++;
@@ -606,7 +720,7 @@
           } else {
             ctx.setLineDash([]);
             ctx.lineWidth = 1.8;
-            ctx.strokeStyle = (pass.type === 'through') ? '#ff4d4d' : ((pass.type === 'frame') ? '#ff9800' : '#2ec4b6');
+            ctx.strokeStyle = (pass.type === 'through') ? '#ff4d4d' : ((pass.type === 'frame') ? '#ff9800' : '#10b981');
           }
           ctx.stroke();
           ctx.setLineDash([]);
@@ -632,39 +746,38 @@
       ctx.fillText('ΔAltitude', 6, h / 2 - 10);
     }
 
-    // --- METRICS & SATELLITES TABLE ---
+    // --- METRICS & TABLE ---
     function renderMetricsAndTable() {
-      const totalSecs = state.fullNightMins * 60;
-      const bStartSecs = state.bracketStartPct * totalSecs;
-      const bEndSecs = state.bracketEndPct * totalSecs;
-      const bDurationMins = Math.round((bEndSecs - bStartSecs) / 60);
+      const startFrame = Math.floor(state.bracketStartPct * state.totalFrames);
+      const endFrame = Math.floor(state.bracketEndPct * state.totalFrames);
+      const bracketFrames = Math.max(0, endFrame - startFrame);
 
-      const totalSubs = Math.floor((bDurationMins * 60) / state.subSecs);
       let corrupted = 0;
-
-      const activePasses = state.passes.filter(p => p.startSecs + p.duration >= bStartSecs && p.startSecs <= bEndSecs);
-
-      activePasses.forEach(p => {
-        if (p.type === 'through' || p.type === 'frame') {
-          corrupted += Math.ceil(p.duration / state.subSecs);
+      for (let f = startFrame; f < endFrame; f++) {
+        if (state.frameStatus[f] && state.frameStatus[f].type !== 'clean') {
+          corrupted++;
         }
-      });
-      corrupted = Math.min(totalSubs, corrupted);
+      }
 
-      let eff = totalSubs > 0 ? (((totalSubs - corrupted) / totalSubs) * 100).toFixed(1) : '100.0';
+      let eff = bracketFrames > 0 ? (((bracketFrames - corrupted) / bracketFrames) * 100).toFixed(1) : '100.0';
+      let durationMins = Math.round((bracketFrames * state.subSecs) / 60);
 
       document.getElementById('efficiencyVal').innerText = `${eff}%`;
-      document.getElementById('mSession').innerText = `${bDurationMins} min`;
+      document.getElementById('mSession').innerText = `${durationMins} min`;
       document.getElementById('mSub').innerText = `${state.subSecs}s`;
-      document.getElementById('mFrames').innerText = totalSubs;
+      document.getElementById('mFrames').innerText = bracketFrames;
       document.getElementById('mCorrupted').innerText = corrupted;
 
-      // Populate Table
+      // Active Passes Table
+      const bStartSecs = state.bracketStartPct * state.totalNightSecs;
+      const bEndSecs = state.bracketEndPct * state.totalNightSecs;
+      const activePasses = state.passes.filter(p => p.startSecs + p.duration >= bStartSecs && p.startSecs <= bEndSecs);
+
       const tbody = document.getElementById('satTableBody');
       tbody.innerHTML = '';
 
       if (activePasses.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center;">No satellite passes in current bracket.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted); text-align: center;">No satellite passes in current bracket window.</td></tr>';
         return;
       }
 
@@ -672,15 +785,15 @@
         let tr = document.createElement('tr');
         tr.className = `sat-row ${pass.id === state.selectedSatId ? 'selected' : ''}`;
         
-        let relStartMins = Math.floor(pass.startSecs / 60);
-        let relEndMins = Math.floor((pass.startSecs + pass.duration) / 60);
+        let passDate = new Date(state.astroDusk.getTime() + pass.startSecs * 1000);
+        let timeStr = passDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         let dotColor = pass.type === 'through' ? 'var(--red-trail)' : (pass.type === 'frame' ? 'var(--orange-trail)' : 'var(--green-frame)');
 
         tr.innerHTML = `
           <td><span class="dot" style="display:inline-block; background:${dotColor};"></span> ${pass.name}</td>
-          <td>+${relStartMins}m</td>
-          <td>+${relEndMins}m</td>
+          <td>${timeStr}</td>
           <td>${pass.duration}s</td>
+          <td style="text-transform: capitalize; color:${dotColor};">${pass.type}</td>
         `;
 
         tr.onclick = () => {
