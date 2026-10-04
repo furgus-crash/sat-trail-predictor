@@ -1,1265 +1,1238 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Astro Trail FOV - Satellite Trail Predictor & Analyzer</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        navy: {
-                            950: '#070A0F',
-                            900: '#0B0E14',
-                            850: '#10141D',
-                            800: '#161C26',
-                            750: '#1E2634',
-                            700: '#262F3D',
-                        },
-                        trail: {
-                            red: '#FF3B30',
-                            orange: '#FF9500',
-                            purple: '#BF5AF2',
-                            mint: '#30D158',
-                            cyan: '#00E5FF'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
-                    }
-                }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstroSat Trail Predictor & FOV Analyzer</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            astro: {
+              bg: '#0B0E14',
+              card: '#151B26',
+              border: 'rgba(255, 255, 255, 0.08)',
+              accent: '#38BDF8',
+              target: '#FF3B30',
+              across: '#FF9500',
+              near: '#BF5AF2',
+              clean: '#30D158',
+              cyan: '#64D2FF'
             }
+          }
         }
-    </script>
-    
-    <!-- Google Fonts & FontAwesome Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      }
+    }
+  </script>
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #070A0F;
-            color: #E2E8F0;
-            overflow-x: hidden;
-        }
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
 
-        /* Tabular figures for non-jumping numbers */
-        .tabular-nums {
-            font-variant-numeric: tabular-nums;
-        }
+    /* Glassmorphism effects */
+    .glass-card {
+      background: rgba(21, 27, 38, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
 
-        /* Glassmorphism panel styles */
-        .glass-panel {
-            background: rgba(22, 28, 38, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
+    /* Horizontal scrollbar hiding utility */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
 
-        .glass-panel-glow {
-            background: rgba(22, 28, 38, 0.9);
-            border: 1px solid rgba(0, 229, 255, 0.2);
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.08);
-        }
+    /* Custom range sliders styling */
+    input[type="range"] {
+      accent-color: #38BDF8;
+    }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0B0E14;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #262F3D;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3B475A;
-        }
-
-        /* Dual Range Slider Styling */
-        .range-slider-container {
-            position: relative;
-            height: 48px;
-        }
-
-        .range-slider-track {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            height: 28px;
-            width: 100%;
-            border-radius: 6px;
-            background: #10141D;
-            overflow: hidden;
-            border: 1px solid #262F3D;
-        }
-
-        input[type="range"].dual-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            position: absolute;
-            pointer-events: none;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background: none;
-            z-index: 20;
-            margin: 0;
-        }
-
-        input[type="range"].dual-thumb::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            pointer-events: auto;
-            width: 18px;
-            height: 38px;
-            border-radius: 4px;
-            background: #00E5FF;
-            box-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
-            cursor: ew-resize;
-            border: 2px solid #FFFFFF;
-        }
-
-        input[type="range"].dual-thumb::-moz-range-thumb {
-            pointer-events: auto;
-            width: 18px;
-            height: 38px;
-            border-radius: 4px;
-            background: #00E5FF;
-            box-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
-            cursor: ew-resize;
-            border: 2px solid #FFFFFF;
-        }
-
-        /* Smooth canvas transition */
-        canvas {
-            display: block;
-            touch-action: none;
-        }
-
-        /* Modal Blur */
-        .modal-backdrop {
-            background: rgba(7, 10, 15, 0.85);
-            backdrop-filter: blur(10px);
-        }
-    </style>
+    /* Subtle pulse animations */
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.03); }
+    }
+    .animate-pulse-slow {
+      animation: pulse-glow 3s infinite ease-in-out;
+    }
+  </style>
 </head>
-<body class="min-h-screen text-slate-200 antialiased selection:bg-cyan-500 selection:text-black pb-12">
+<body class="bg-astro-bg text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white">
 
-    <!-- Top Header Navigation -->
-    <header class="sticky top-0 z-40 bg-navy-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-8 py-3">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <!-- App Branding -->
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 via-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                    <i class="fa-solid font-bold fa-satellite text-white text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                        Astro Trail FOV
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">v2.4 Live</span>
-                    </h1>
-                    <p class="text-xs text-slate-400">Astrophotography Satellite Trail Predictor & Field-of-View Analyzer</p>
-                </div>
-            </div>
-
-            <!-- Global Dropdown Controls & Help Trigger -->
-            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                <!-- Telescope Selector -->
-                <div class="flex flex-col">
-                    <label for="telescope-select" class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
-                        <i class="fa-solid fa-telescope text-cyan-400 mr-1"></i> Telescope / Optic
-                    </label>
-                    <select id="telescope-select" class="bg-navy-850 text-xs font-medium text-slate-200 border border-slate-700/80 rounded-lg px-3 py-1.5 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all cursor-pointer">
-                        <optgroup label="DWARFLAB">
-                            <option value="dwarf_2">DWARFLAB DWARF II (3.00° × 1.70°)</option>
-                            <option value="dwarf_3" selected>DWARFLAB DWARF 3 (3.20° × 1.80°)</option>
-                        </optgroup>
-                        <optgroup label="ZWO Seestar">
-                            <option value="seestar_s50">ZWO Seestar S50 (1.29° × 0.73°)</option>
-                            <option value="seestar_s30">ZWO Seestar S30 (1.90° × 1.10°)</option>
-                        </optgroup>
-                        <optgroup label="Vaonis">
-                            <option value="vespera">Vaonis Vespera / Classic (0.90° × 1.60°)</option>
-                            <option value="vespera_2">Vaonis Vespera II (2.50° × 1.40°)</option>
-                            <option value="vespera_pro">Vaonis Vespera Pro (1.80° × 1.00°)</option>
-                            <option value="stellina">Vaonis Stellina (1.00° × 0.70°)</option>
-                            <option value="hestia">Vaonis Hestia (1.80° × 1.00°)</option>
-                        </optgroup>
-                        <optgroup label="Unistellar">
-                            <option value="evscope_2">Unistellar eVscope 2 (0.57° × 0.78°)</option>
-                            <option value="equinox_2">Unistellar eQuinox 2 (0.57° × 0.78°)</option>
-                            <option value="odyssey">Unistellar Odyssey (0.57° × 0.75°)</option>
-                            <option value="odyssey_pro">Unistellar Odyssey Pro (0.57° × 0.75°)</option>
-                        </optgroup>
-                    </select>
-                </div>
-
-                <!-- Sub-Exposure Duration Selector -->
-                <div class="flex flex-col">
-                    <label for="subexp-select" class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
-                        <i class="fa-solid fa-stopwatch text-cyan-400 mr-1"></i> Sub-Exposure
-                    </label>
-                    <select id="subexp-select" class="bg-navy-850 text-xs font-medium text-slate-200 border border-slate-700/80 rounded-lg px-3 py-1.5 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all cursor-pointer">
-                        <!-- Populated dynamically 10s to 300s in 5s steps -->
-                    </select>
-                </div>
-
-                <!-- User Guide Main Header Button -->
-                <button onclick="openUserGuide('overview')" class="mt-4 md:mt-0 flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-xs px-4 py-2 rounded-lg shadow-md transition-all active:scale-95">
-                    <i class="fa-solid fa-book-open"></i>
-                    <span>User Guide</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Application Container -->
-    <main class="max-w-7xl mx-auto px-4 lg:px-8 mt-6 space-y-6">
-
-        <!-- Top Row Grid: Sky View Canvas (Left) + Efficiency Summary (Right) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-            <!-- Section 1: Sky View Canvas Plot -->
-            <section class="lg:col-span-8 glass-panel rounded-2xl p-5 flex flex-col relative overflow-hidden">
-                <!-- Section Header -->
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-crosshairs text-cyan-400"></i>
-                        <h2 class="text-base font-bold text-white tracking-wide">Sky View</h2>
-                        <span class="text-xs text-slate-400 hidden sm:inline">(Celestial Target Field & Sensor Boundary)</span>
-                    </div>
-                    <!-- Section ? Contextual Button -->
-                    <button onclick="openUserGuide('sky-view')" title="Section Help: Sky View Details" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-400 border border-slate-700 hover:border-cyan-500/40 flex items-center justify-center transition-all">
-                        <i class="fa-solid fa-circle-question text-sm"></i>
-                    </button>
-                </div>
-
-                <!-- Sky View Canvas Container -->
-                <div class="relative w-full aspect-[16/9] sm:aspect-[2/1] lg:aspect-[16/9] bg-navy-950 rounded-xl overflow-hidden border border-slate-800 shadow-inner flex items-center justify-center">
-                    <canvas id="skyViewCanvas" class="w-full h-full cursor-crosshair"></canvas>
-                </div>
-
-                <!-- Live Summary Pill Banner & Legend Controls -->
-                <div class="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                    <!-- Dynamic Text Counter -->
-                    <div id="skyview-summary-text" class="text-slate-300 font-medium leading-relaxed">
-                        <!-- Populated by JS -->
-                    </div>
-
-                    <!-- Interactive Legend Toggle Badges -->
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <button id="toggle-through" onclick="toggleTrailFilter('through')" class="px-2.5 py-1 rounded-md border border-red-500/40 bg-red-500/10 text-red-400 font-medium flex items-center gap-1.5 transition-all">
-                            <span class="w-2 h-2 rounded-full bg-trail-red"></span>
-                            <span>Through target</span>
-                        </button>
-                        <button id="toggle-across" onclick="toggleTrailFilter('across')" class="px-2.5 py-1 rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-400 font-medium flex items-center gap-1.5 transition-all">
-                            <span class="w-2 h-2 rounded-full bg-trail-orange"></span>
-                            <span>Across frame</span>
-                        </button>
-                        <button id="toggle-miss" onclick="toggleTrailFilter('miss')" class="px-2.5 py-1 rounded-md border border-purple-500/40 bg-purple-500/10 text-purple-400 font-medium flex items-center gap-1.5 transition-all">
-                            <span class="w-2 h-2 rounded-full bg-trail-purple"></span>
-                            <span>Near-miss</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Technical Footer Footnote -->
-                <div class="mt-2 text-[11px] text-slate-400 leading-normal border-t border-slate-800/80 pt-2 flex flex-wrap justify-between gap-2">
-                    <span>Tap satellite in list below to trace with dashed line. Field rotation not modeled.</span>
-                    <span id="fov-specs-footnote" class="text-slate-400 font-mono">FOV: 3.20°×1.80° inside 7.1°×4.0° context</span>
-                </div>
-            </section>
-
-            <!-- Section 3: Efficiency & Session Metrics -->
-            <section class="lg:col-span-4 glass-panel rounded-2xl p-5 flex flex-col justify-between relative">
-                <div>
-                    <!-- Section Header -->
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-cyan-400"></i>
-                            <h2 class="text-base font-bold text-white tracking-wide">Efficiency & Metrics</h2>
-                        </div>
-                        <button onclick="openUserGuide('efficiency')" title="Section Help: Efficiency Metrics" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-400 border border-slate-700 hover:border-cyan-500/40 flex items-center justify-center transition-all">
-                            <i class="fa-solid fa-circle-question text-sm"></i>
-                        </button>
-                    </div>
-
-                    <!-- Hero Efficiency Meter -->
-                    <div class="p-5 rounded-xl bg-gradient-to-br from-navy-850 to-navy-900 border border-slate-800 text-center mb-5 relative overflow-hidden">
-                        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Trail-Free Imaging Efficiency</div>
-                        <div id="stat-efficiency" class="text-5xl font-black tracking-tight text-trail-mint tabular-nums my-1">
-                            98.9%
-                        </div>
-                        <div class="text-xs text-slate-400">of total exposure time remains uninterrupted</div>
-                    </div>
-
-                    <!-- Breakdown Grid -->
-                    <div class="grid grid-cols-2 gap-3 mb-5 text-xs">
-                        <div class="p-3 rounded-lg bg-navy-850/80 border border-slate-800/80">
-                            <div class="text-slate-400 text-[10px] uppercase font-semibold">Active Session</div>
-                            <div id="stat-session-time" class="text-base font-bold text-slate-100 font-mono mt-0.5">551 min</div>
-                        </div>
-                        <div class="p-3 rounded-lg bg-navy-850/80 border border-slate-800/80">
-                            <div class="text-slate-400 text-[10px] uppercase font-semibold">Sub-Exposure</div>
-                            <div id="stat-sub-exposure" class="text-base font-bold text-slate-100 font-mono mt-0.5">10s</div>
-                        </div>
-                        <div class="p-3 rounded-lg bg-navy-850/80 border border-slate-800/80">
-                            <div class="text-slate-400 text-[10px] uppercase font-semibold">Total Frames</div>
-                            <div id="stat-total-frames" class="text-base font-bold text-cyan-400 font-mono mt-0.5">3,306</div>
-                        </div>
-                        <div class="p-3 rounded-lg bg-navy-850/80 border border-slate-800/80">
-                            <div class="text-slate-400 text-[10px] uppercase font-semibold">Corrupted Subs</div>
-                            <div id="stat-corrupted-frames" class="text-base font-bold text-trail-red font-mono mt-0.5">34</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Target Preset Information Box -->
-                <div class="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-800/30 text-xs flex items-start gap-3">
-                    <i class="fa-solid fa-circle-info text-cyan-400 text-base mt-0.5"></i>
-                    <div>
-                        <div class="font-semibold text-cyan-300 mb-0.5">Target: M31 Andromeda Galaxy</div>
-                        <div class="text-slate-300 text-[11px] leading-relaxed">
-                            RA 00h 42m 44s | DEC +41° 16′ 09″. FOV centered on galactic nucleus.
-                        </div>
-                    </div>
-                </div>
-            </section>
+  <!-- Navigation / Header -->
+  <header class="border-b border-white/10 bg-astro-card/80 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20">
+            <i class="fa-solid font-bold fa-satellite-dish text-lg"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg leading-tight tracking-tight text-white flex items-center gap-2">
+              AstroSat Predictor <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">v2.4 FOV</span>
+            </h1>
+            <p class="text-xs text-slate-400">Satellite Trail & Session Optimization Engine</p>
+          </div>
         </div>
 
-        <!-- Section 2: Full Night Timeline -->
-        <section class="glass-panel rounded-2xl p-5 relative">
-            <!-- Section Header -->
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-timeline text-cyan-400"></i>
-                    <h2 class="text-base font-bold text-white tracking-wide">Full Night Timeline</h2>
-                    <span class="text-xs text-slate-400 hidden sm:inline">(Astronomical Twilight Window: 08:37 PM – 05:48 AM)</span>
-                </div>
-                <button onclick="openUserGuide('timeline')" title="Section Help: Full Night Timeline" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-400 border border-slate-700 hover:border-cyan-500/40 flex items-center justify-center transition-all">
-                    <i class="fa-solid fa-circle-question text-sm"></i>
-                </button>
-            </div>
+        <!-- Guide Trigger Button Mobile -->
+        <button onclick="openGuideModal()" class="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-sky-300 transition">
+          <i class="fa-solid fa-book-open"></i> User Guide
+        </button>
+      </div>
 
-            <!-- Preset Range Selection Quick Buttons -->
-            <div class="flex flex-wrap items-center gap-2 mb-3">
-                <span class="text-xs text-slate-400 font-medium mr-1">Session Presets:</span>
-                <button onclick="setTimelinePreset('full')" class="text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-all">Full Night (9h 11m)</button>
-                <button onclick="setTimelinePreset('dusk')" class="text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-all">Dusk Peak (2h)</button>
-                <button onclick="setTimelinePreset('midnight')" class="text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-all">Deep Night Shadow (3h)</button>
-                <button onclick="setTimelinePreset('dawn')" class="text-xs px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-all">Dawn Peak (2h)</button>
-                <button onclick="setTimelinePreset('clean')" class="text-xs px-2.5 py-1 rounded-md bg-trail-mint/20 hover:bg-trail-mint/30 text-trail-mint border border-trail-mint/40 font-semibold transition-all">
-                    <i class="fa-solid fa-sparkles mr-1"></i> Longest Clean Window (1.0h)
-                </button>
-            </div>
-
-            <!-- Custom Dual Handle Range Slider with Density Bar Overlay -->
-            <div class="range-slider-container my-2">
-                <!-- Visual Background Density Strip -->
-                <div class="range-slider-track">
-                    <canvas id="timelineDensityCanvas" class="w-full h-full"></canvas>
-                </div>
-
-                <!-- Range Dual Sliders -->
-                <input type="range" id="slider-min" min="0" max="551" value="0" step="1" class="dual-thumb" oninput="onSliderInput()">
-                <input type="range" id="slider-max" min="0" max="551" value="551" step="1" class="dual-thumb" oninput="onSliderInput()">
-            </div>
-
-            <!-- Time Legend & Longest Satellite Free Window Info -->
-            <div class="mt-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 text-xs">
-                <div id="timeline-range-label" class="font-mono text-cyan-300 font-semibold">
-                    Selected Window: 08:37 PM – 05:48 AM (551 minutes)
-                </div>
-                <div id="stat-clean-stretch" class="text-slate-300 bg-navy-850 px-3 py-1.5 rounded-lg border border-slate-800 flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-trail-mint animate-pulse"></span>
-                    <span>Longest satellite-free stretch: <strong class="text-trail-mint font-mono">10:56 PM – 11:57 PM (61m)</strong></span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 4: Satellites Active in Session -->
-        <section class="glass-panel rounded-2xl p-5 relative">
-            <!-- Section Header -->
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-cyan-400"></i>
-                    <h2 class="text-base font-bold text-white tracking-wide">Satellites Active in Selected Session</h2>
-                    <span id="active-count-badge" class="ml-2 text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 font-mono border border-cyan-500/30">18 Active</span>
-                </div>
-                <button onclick="openUserGuide('satellite-list')" title="Section Help: Satellite List" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-400 border border-slate-700 hover:border-cyan-500/40 flex items-center justify-center transition-all">
-                    <i class="fa-solid fa-circle-question text-sm"></i>
-                </button>
-            </div>
-
-            <!-- Table Filter Pills -->
-            <div class="flex items-center justify-between gap-3 mb-3 text-xs flex-wrap">
-                <div class="text-slate-400">Click any row below to highlight and trace its trajectory on the Sky View plot with a dashed line.</div>
-                <div class="flex items-center gap-2">
-                    <span class="text-slate-400 text-[11px]">Filter List:</span>
-                    <button onclick="setTableFilter('all')" id="btn-filter-all" class="px-2.5 py-1 rounded bg-slate-700 text-white font-medium">All (18)</button>
-                    <button onclick="setTableFilter('through')" id="btn-filter-through" class="px-2.5 py-1 rounded bg-navy-850 text-slate-400 hover:text-slate-200">Through Target</button>
-                    <button onclick="setTableFilter('across')" id="btn-filter-across" class="px-2.5 py-1 rounded bg-navy-850 text-slate-400 hover:text-slate-200">Across Frame</button>
-                    <button onclick="setTableFilter('miss')" id="btn-filter-miss" class="px-2.5 py-1 rounded bg-navy-850 text-slate-400 hover:text-slate-200">Near-Miss</button>
-                </div>
-            </div>
-
-            <!-- Scrollable Responsive Data Table -->
-            <div class="overflow-x-auto rounded-xl border border-slate-800 bg-navy-950/60">
-                <table class="w-full text-left text-xs text-slate-300">
-                    <thead class="bg-navy-850 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
-                        <tr>
-                            <th class="py-3 px-4">Satellite Name / NORAD ID</th>
-                            <th class="py-3 px-4">Crossing Time</th>
-                            <th class="py-3 px-4">Duration in FOV</th>
-                            <th class="py-3 px-4">Type / Classification</th>
-                            <th class="py-3 px-4 text-right">Altitude / Orbit</th>
-                        </tr>
-                    </thead>
-                    <tbody id="satellite-table-body" class="divide-y divide-slate-800/60">
-                        <!-- Populated dynamically via Javascript -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
-
-    <!-- User Guide Modal Overlay -->
-    <div id="userGuideModal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-        <div class="glass-panel-glow w-full max-w-4xl bg-navy-900 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            
-            <!-- Modal Header -->
-            <div class="p-5 bg-navy-950 border-b border-slate-800 flex items-center justify-between sticky top-0 z-10">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-                        <i class="fa-solid fa-book text-base"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-white">Astrophotography & Satellite Trail User Guide</h3>
-                        <p class="text-xs text-slate-400">Complete Operations, Physics Principles & Stacking Guidance</p>
-                    </div>
-                </div>
-                <button onclick="closeUserGuide()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 flex items-center justify-center transition-all">
-                    <i class="fa-solid fa-xmark text-base"></i>
-                </button>
-            </div>
-
-            <!-- Quick Jump Navigation Sub-bar -->
-            <div class="bg-navy-850 border-b border-slate-800 px-5 py-2 flex items-center gap-2 overflow-x-auto text-xs">
-                <span class="text-slate-400 font-semibold mr-1">Jump to:</span>
-                <button onclick="scrollToGuideSection('guide-overview')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-400 font-medium shrink-0">Overview & Physics</button>
-                <button onclick="scrollToGuideSection('guide-sky-view')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium shrink-0">Sky View FOV</button>
-                <button onclick="scrollToGuideSection('guide-timeline')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium shrink-0">Timeline & Slider</button>
-                <button onclick="scrollToGuideSection('guide-efficiency')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium shrink-0">Efficiency & Stats</button>
-                <button onclick="scrollToGuideSection('guide-deepsky')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium shrink-0">Deep Sky Target Strategy</button>
-                <button onclick="scrollToGuideSection('guide-milkyway')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium shrink-0">Milky Way Strategy</button>
-            </div>
-
-            <!-- Scrollable Modal Content Body -->
-            <div class="p-6 overflow-y-auto space-y-8 text-sm leading-relaxed text-slate-300" id="userGuideScrollBody">
-
-                <!-- SECTION: Overview & Physics -->
-                <div id="guide-overview" class="space-y-3 border-b border-slate-800 pb-6">
-                    <h4 class="text-base font-bold text-cyan-400 flex items-center gap-2">
-                        <i class="fa-solid fa-atom"></i> 1. Physical Principles & Orbital Mechanics
-                    </h4>
-                    <p>
-                        This application calculates real-time satellite trajectory intersections with your telescope's optical Field of View (FOV). Understanding why satellite trails behave as they do requires recognizing three key orbital mechanics principles:
-                    </p>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-3 text-xs">
-                        <div class="p-4 rounded-xl bg-navy-850 border border-slate-800">
-                            <h5 class="font-bold text-white mb-1 text-sm text-cyan-300">ISS Transit Velocity & FOV Scale</h5>
-                            <p class="text-slate-300">
-                                The International Space Station (ISS) travels at <strong>~7.66 km/s</strong> in Low Earth Orbit (LEO). While a full horizon-to-horizon visible pass across the open sky takes 5 to 6 minutes ($180^\circ$), your smart telescope FOV is extremely small ($1.0^\circ$ to $3.2^\circ$).
-                            </p>
-                            <p class="mt-2 text-slate-400">
-                                Inside a zoomed $7.1^\circ \times 4.0^\circ$ sky context window, the ISS covers $7^\circ$ of arc in approximately <strong>21 seconds</strong> (0.33°/sec). A trail crossing duration of 20–25 seconds in this window is physically accurate.
-                            </p>
-                        </div>
-                        <div class="p-4 rounded-xl bg-navy-850 border border-slate-800">
-                            <h5 class="font-bold text-white mb-1 text-sm text-cyan-300">Earth's Shadow Cone (Umbra)</h5>
-                            <p class="text-slate-300">
-                                Satellites do not emit light; they are only visible when illuminated by direct sunlight. During deep midnight (e.g. 11:00 PM – 3:30 AM), Earth casts a massive shadow cone into space.
-                            </p>
-                            <p class="mt-2 text-slate-400">
-                                Most LEO satellites enter Earth's shadow and turn dark, creating a prolonged <strong>satellite-free window</strong> in the middle of the night (highlighted in mint green on the timeline bar).
-                            </p>
-                        </div>
-                    </div>
-
-                    <p class="text-xs text-slate-400">
-                        <strong>Spatial Geometry Math:</strong> The visible sky hemisphere contains 20,626 square degrees. A $2.95^\circ \times 1.66^\circ$ sensor frame covers only ~4.9 sq deg—representing just <strong>0.024% of the visible sky</strong>. Finding 15 to 20 satellite passes in that tiny slice across a full 9-hour night is mathematically normal.
-                    </p>
-                </div>
-
-                <!-- SECTION: Sky View -->
-                <div id="guide-sky-view" class="space-y-3 border-b border-slate-800 pb-6">
-                    <h4 class="text-base font-bold text-cyan-400 flex items-center gap-2">
-                        <i class="fa-solid fa-crosshairs"></i> 2. Sky View Interface & Boundary Truncation
-                    </h4>
-                    <p>
-                        The Sky View canvas plots the satellite trajectories in differential Azimuth and Altitude offsets ($\Delta\text{Az}, \Delta\text{Alt}$) relative to your celestial target centered at $(0^\circ, 0^\circ)$.
-                    </p>
-                    <ul class="list-disc list-inside space-y-1.5 text-xs text-slate-300 pl-2">
-                        <li><strong class="text-cyan-300">Outer Grid Window:</strong> Displays a $7.1^\circ \times 4.0^\circ$ sky context view centered on the astronomical object (e.g., Andromeda Galaxy M31).</li>
-                        <li><strong class="text-cyan-300">Inner Blue Box:</strong> Represents your active smart telescope or camera sensor FOV (scaled dynamically based on your dropdown selection).</li>
-                        <li><strong class="text-red-400">Red Trails (Through Target):</strong> Satellite vectors passing directly through the target center zone.</li>
-                        <li><strong class="text-amber-400">Orange Trails (Across Frame):</strong> Satellite vectors crossing inside the blue telescope FOV box without hitting the central target core.</li>
-                        <li><strong class="text-purple-400">Purple Trails (Near-Miss):</strong> Satellite vectors passing outside the blue FOV box but inside the surrounding $7.1^\circ \times 4.0^\circ$ sky view. (Purple was selected to contrast sharply against the green timeline elements!)</li>
-                        <li><strong class="text-white">Vector Edge Truncation:</strong> All line vectors are strictly clipped at the exact grid perimeter ($\pm 3.55^\circ$ Az, $\pm 2.0^\circ$ Alt) to prevent rendering bleed past the plot borders.</li>
-                    </ul>
-                </div>
-
-                <!-- SECTION: Timeline & Slider -->
-                <div id="guide-timeline" class="space-y-3 border-b border-slate-800 pb-6">
-                    <h4 class="text-base font-bold text-cyan-400 flex items-center gap-2">
-                        <i class="fa-solid fa-timeline"></i> 3. Full Night Timeline & Real-time Filtering
-                    </h4>
-                    <p>
-                        The Full Night Timeline features a dual-handle range slider spanning astronomical twilight from dusk (08:37 PM) to dawn (05:48 AM).
-                    </p>
-                    <p class="text-xs text-slate-300">
-                        <strong>Real-time Synchronous Updates:</strong> Adjusting either handle immediately filters active satellites for that specific timeframe, updating the Sky View canvas vectors, efficiency percentages, and satellite active table in real time without refreshing the page.
-                    </p>
-                    <p class="text-xs text-slate-300">
-                        <strong>Mint Green Highlight:</strong> The green bar above the strip marks the single longest continuous satellite-free interval tonight (e.g., 10:56 PM – 11:57 PM).
-                    </p>
-                </div>
-
-                <!-- SECTION: Efficiency -->
-                <div id="guide-efficiency" class="space-y-3 border-b border-slate-800 pb-6">
-                    <h4 class="text-base font-bold text-cyan-400 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie"></i> 4. Efficiency Metrics & Sub-Exposure Mathematics
-                    </h4>
-                    <p class="text-xs text-slate-300">
-                        Sub-exposure duration (selected via the header dropdown in 5-second steps from 10s to 300s) directly dictates how many frames are corrupted by a satellite pass.
-                    </p>
-                    <div class="p-3 bg-navy-950 rounded-lg border border-slate-800 text-xs font-mono text-cyan-300">
-                        Total Frames = Math.floor(Selected Session Duration / Sub-Exposure Duration)<br>
-                        Corrupted Frames = Count of unique sub-exposure intervals intersected by active satellite passes<br>
-                        Efficiency % = ((Total Frames - Corrupted Frames) / Total Frames) * 100%
-                    </div>
-                </div>
-
-                <!-- SECTION: Deep Sky Strategy -->
-                <div id="guide-deepsky" class="space-y-3 border-b border-slate-800 pb-6">
-                    <h4 class="text-base font-bold text-cyan-400 flex items-center gap-2">
-                        <i class="fa-solid fa-galaxy"></i> 5. Deep Sky Target Recommendations (Nebulae, Galaxies)
-                    </h4>
-                    <p class="text-xs text-slate-300">
-                        When shooting deep sky objects through narrow focal length telescopes ($0.5^\circ$ to $3.5^\circ$ FOV):
-                    </p>
-                    <ol class="list-decimal list-inside space-y-2 text-xs text-slate-300 pl-2">
-                        <li><strong>Twilight Sub-Exposure Strategy:</strong> Use 10s to 20s sub-exposures during dusk/dawn peak satellite hours. If a satellite crosses during a 10s sub, you only lose 10 seconds of exposure instead of losing 300 seconds.</li>
-                        <li><strong>Deep Midnight Strategy:</strong> Transition to longer sub-exposures (30s to 120s+) during the mint green satellite-free midnight window.</li>
-                        <li><strong>Kappa-Sigma Stacking Rejection:</strong> Always enable <em>Kappa-Sigma Clipping</em>, <em>Winsorized Sigma Clipping</em>, or <em>Linear Fit Rejection</em> in your stacking software (Siril, PixInsight, DSS, or built-in smart scope app). Statistical rejection algorithms effortlessly reject trail pixels without degrading image signal-to-noise ratio.</li>
-                    </ol>
-                </div>
-
-                <!-- SECTION: Milky Way Strategy -->
-                <div id="guide-milkyway" class="space-y-3">
-                    <h4 class="text-base font-bold text-cyan-400 flex items-center gap-2">
-                        <i class="fa-solid fa-mountain-sun"></i> 6. Wide-Field & Milky Way Astrophotography Strategy
-                    </h4>
-                    <p class="text-xs text-slate-300">
-                        Wide-angle camera lenses ($14mm$ to $35mm$) cover massive sky regions ($60^\circ$ to $110^\circ+$ FOV).
-                    </p>
-                    <ul class="list-disc list-inside space-y-2 text-xs text-slate-300 pl-2">
-                        <li><strong>High Density Realities:</strong> In wide fields, dozens of satellites cross every few minutes during twilight.</li>
-                        <li><strong>Panorama Panel Timing:</strong> Shoot wide Milky Way panorama tiles during deep astronomical night (midnight) when satellites are eclipsed in Earth's shadow cone.</li>
-                        <li><strong>Median Stacking:</strong> Take 5 to 10 sequential sub-exposures per foreground or sky tile and stack using Median integration to eliminate all moving satellite streaks automatically.</li>
-                    </ul>
-                </div>
-
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="p-4 bg-navy-950 border-t border-slate-800 flex items-center justify-between">
-                <span class="text-xs text-slate-400">Astro Trail FOV Predictor Engine</span>
-                <button onclick="closeUserGuide()" class="px-5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-semibold text-xs transition-all">
-                    Close User Guide
-                </button>
-            </div>
+      <!-- Quick Session Summary Status Bar -->
+      <div class="flex items-center gap-4 text-xs bg-slate-900/80 px-3.5 py-2 rounded-xl border border-white/5 overflow-x-auto max-w-full">
+        <div class="flex items-center gap-1.5 whitespace-nowrap">
+          <span class="text-slate-400">Target:</span>
+          <span id="headerTargetName" class="font-semibold text-sky-400">M31 Andromeda</span>
         </div>
+        <div class="h-3 w-px bg-white/10"></div>
+        <div class="flex items-center gap-1.5 whitespace-nowrap">
+          <span class="text-slate-400">Dusk-Dawn:</span>
+          <span class="font-mono text-slate-200">08:30 PM - 05:30 AM</span>
+        </div>
+        <div class="h-3 w-px bg-white/10"></div>
+        <div class="flex items-center gap-1.5 whitespace-nowrap">
+          <span class="text-slate-400">Clean Window:</span>
+          <span id="headerCleanWindowText" class="font-mono font-medium text-astro-clean">01:15 AM - 03:45 AM (2h 30m)</span>
+        </div>
+      </div>
+
+      <!-- Desktop Guide Button -->
+      <button onclick="openGuideModal()" class="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-xs font-medium text-sky-300 transition">
+        <i class="fa-solid fa-book-open text-sky-400"></i>
+        <span>User Guide</span>
+      </button>
     </div>
+  </header>
 
-    <script>
-        // ==========================================
-        // APP STATE & PRESETS DATA
-        // ==========================================
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
+    
+    <!-- LEFT PANEL: Controls & Configuration (4 Cols) -->
+    <section class="lg:col-span-4 flex flex-col gap-5">
 
-        const TELESCOPE_PRESETS = {
-            'dwarf_2':     { name: 'DWARFLAB DWARF II', fovW: 3.00, fovH: 1.70 },
-            'dwarf_3':     { name: 'DWARFLAB DWARF 3', fovW: 3.20, fovH: 1.80 },
-            'seestar_s50': { name: 'ZWO Seestar S50', fovW: 1.29, fovH: 0.73 },
-            'seestar_s30': { name: 'ZWO Seestar S30', fovW: 1.90, fovH: 1.10 },
-            'vespera':     { name: 'Vaonis Vespera / Classic', fovW: 0.90, fovH: 1.60 },
-            'vespera_2':   { name: 'Vaonis Vespera II', fovW: 2.50, fovH: 1.40 },
-            'vespera_pro': { name: 'Vaonis Vespera Pro', fovW: 1.80, fovH: 1.00 },
-            'stellina':    { name: 'Vaonis Stellina', fovW: 1.00, fovH: 0.70 },
-            'hestia':     { name: 'Vaonis Hestia', fovW: 1.80, fovH: 1.00 },
-            'evscope_2':   { name: 'Unistellar eVscope 2', fovW: 0.57, fovH: 0.78 },
-            'equinox_2':   { name: 'Unistellar eQuinox 2', fovW: 0.57, fovH: 0.78 },
-            'odyssey':     { name: 'Unistellar Odyssey', fovW: 0.57, fovH: 0.75 },
-            'odyssey_pro': { name: 'Unistellar Odyssey Pro', fovW: 0.57, fovH: 0.75 },
+      <!-- Target & Scope Selector Card -->
+      <div class="glass-card rounded-2xl p-4 md:p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-crosshairs text-sky-400"></i>
+            <h2 class="font-semibold text-sm text-slate-100">Sky Target & Telescope Profile</h2>
+          </div>
+          <button onclick="openGuideModal('target-guide')" class="text-slate-400 hover:text-sky-400 transition text-xs" title="Help on Target Setup">
+            <i class="fa-regular fa-circle-question text-sm"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <!-- Target Preset Selector -->
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Target Object Preset</label>
+            <select id="targetSelect" onchange="handleTargetChange()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500">
+              <option value="M31">M31 - Andromeda Galaxy (RA 00h 42m / DEC +41° 16')</option>
+              <option value="M42">M42 - Orion Nebula (RA 05h 35m / DEC -05° 23')</option>
+              <option value="M45">M45 - Pleiades Star Cluster (RA 03h 47m / DEC +24° 07')</option>
+              <option value="NGC7000">NGC 7000 - North America Nebula (RA 20h 58m / DEC +44° 20')</option>
+              <option value="M13">M13 - Great Hercules Cluster (RA 16h 41m / DEC +36° 27')</option>
+              <option value="CUSTOM">Custom Celestial Coordinates...</option>
+            </select>
+          </div>
+
+          <!-- Smart Telescope Selector -->
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Smart Telescope / Optics Preset</label>
+            <select id="scopeSelect" onchange="handleScopeChange()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500">
+              <optgroup label="ZWO Seestar">
+                <option value="seestar_s50">ZWO Seestar S50 (50mm f/5 • FOV 1.29° x 0.73°)</option>
+                <option value="seestar_s30">ZWO Seestar S30 (30mm f/5 • FOV 2.10° x 1.20°)</option>
+              </optgroup>
+              <optgroup label="DWARFLAB">
+                <option value="dwarf_3">DWARFLAB DWARF 3 (35mm f/4.3 • FOV 3.00° x 1.70°)</option>
+                <option value="dwarf_2" selected>DWARFLAB DWARF II (24mm f/4.2 • FOV 3.55° x 2.00°)</option>
+              </optgroup>
+              <optgroup label="Vaonis">
+                <option value="vespera_pro">Vaonis Vespera Pro (50mm f/4.5 • FOV 1.60° x 0.90°)</option>
+                <option value="vespera_2">Vaonis Vespera II (50mm f/5 • FOV 2.50° x 1.40°)</option>
+                <option value="vespera_1">Vaonis Vespera (50mm f/4 • FOV 1.60° x 0.90°)</option>
+                <option value="stellina">Vaonis Stellina (80mm f/5 • FOV 1.00° x 0.70°)</option>
+                <option value="hestia">Vaonis Hestia (Smartphone Adapter • FOV 1.80° x 1.80°)</option>
+              </optgroup>
+              <optgroup label="Unistellar">
+                <option value="evscope_2">Unistellar eVscope 2 (114mm f/4 • FOV 0.75° x 0.50°)</option>
+                <option value="equinox_2">Unistellar eQuinox 2 (114mm f/4 • FOV 0.75° x 0.50°)</option>
+                <option value="odyssey_pro">Unistellar Odyssey Pro (85mm f/3.9 • FOV 0.56° x 0.37°)</option>
+              </optgroup>
+              <option value="custom">Custom Optical Configuration...</option>
+            </select>
+          </div>
+
+          <!-- Dynamic FOV Dimensions Display / Custom Inputs -->
+          <div class="grid grid-cols-2 gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-white/5">
+            <div>
+              <span class="text-slate-400 block text-[10px]">FOV Width (deg):</span>
+              <input type="number" id="fovWidthInput" step="0.1" value="3.55" onchange="updateCustomScope()" class="w-full bg-slate-800 border border-white/10 rounded px-2 py-1 text-slate-100 font-mono text-xs">
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">FOV Height (deg):</span>
+              <input type="number" id="fovHeightInput" step="0.1" value="2.00" onchange="updateCustomScope()" class="w-full bg-slate-800 border border-white/10 rounded px-2 py-1 text-slate-100 font-mono text-xs">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Photography Session Planning Card -->
+      <div class="glass-card rounded-2xl p-4 md:p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-sky-400"></i>
+            <h2 class="font-semibold text-sm text-slate-100">Photography Session Window</h2>
+          </div>
+          <button onclick="openGuideModal('session-guide')" class="text-slate-400 hover:text-sky-400 transition text-xs" title="Help on Session Planning">
+            <i class="fa-regular fa-circle-question text-sm"></i>
+          </button>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          <!-- Session Start Slider / Input -->
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-slate-300 font-medium">Session Start Time</label>
+              <span id="sessionStartLabel" class="font-mono text-sky-400 font-semibold">09:30 PM</span>
+            </div>
+            <input type="range" id="sessionStartRange" min="0" max="540" step="15" value="60" oninput="handleSessionSliderChange()" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+              <span>08:30 PM (Dusk)</span>
+              <span>01:00 AM</span>
+              <span>05:30 AM (Dawn)</span>
+            </div>
+          </div>
+
+          <!-- Session Duration Controls -->
+          <div>
+            <label class="block text-slate-300 font-medium mb-1.5">Session Duration</label>
+            <div class="grid grid-cols-4 gap-1.5 mb-2">
+              <button onclick="setSessionDuration(30)" class="duration-btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/5 font-mono text-[11px] transition">30m</button>
+              <button onclick="setSessionDuration(60)" class="duration-btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/5 font-mono text-[11px] transition">60m</button>
+              <button onclick="setSessionDuration(120)" class="duration-btn py-1.5 bg-sky-500/20 text-sky-300 border border-sky-500/40 font-mono text-[11px] transition">120m</button>
+              <button onclick="setSessionDuration(240)" class="duration-btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/5 font-mono text-[11px] transition">240m</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="number" id="customDurationInput" min="10" max="540" value="120" onchange="handleCustomDurationChange()" class="w-24 bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-slate-200 font-mono text-xs">
+              <span class="text-slate-400">minutes total</span>
+            </div>
+          </div>
+
+          <!-- Snap to Longest Clean Window CTA -->
+          <div class="pt-1">
+            <button onclick="snapToLongestCleanWindow()" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 transition transform active:scale-98">
+              <i class="fa-solid fa-wand-magic-sparkles text-emerald-200"></i>
+              <span>Select Longest Clean Window</span>
+            </button>
+            <p class="text-[10px] text-slate-400 text-center mt-1.5">Automatically positions session in the largest satellite-free gap tonight.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-exposure Parameters Card -->
+      <div class="glass-card rounded-2xl p-4 md:p-5 flex flex-col gap-3">
+        <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-camera text-sky-400"></i>
+            <h2 class="font-semibold text-sm text-slate-100">Sub-Exposure Settings</h2>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1">Sub-exposure Length</label>
+            <select id="subExposureSelect" onchange="handleSubExpChange()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-slate-200 font-mono">
+              <option value="10">10 sec</option>
+              <option value="15">15 sec</option>
+              <option value="20">20 sec</option>
+              <option value="30" selected>30 sec</option>
+              <option value="45">45 sec</option>
+              <option value="60">60 sec</option>
+              <option value="90">90 sec</option>
+              <option value="120">120 sec</option>
+              <option value="180">180 sec</option>
+              <option value="240">240 sec</option>
+              <option value="300">300 sec (5 min)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Overhead / Readout</label>
+            <select id="overheadSelect" onchange="recalculateSession()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-2.5 py-1.5 text-slate-200 font-mono">
+              <option value="2">2 sec (Fast)</option>
+              <option value="5" selected>5 sec (Standard)</option>
+              <option value="10">10 sec (Slow)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT / MAIN PANEL: FOV Simulation & Timeline (8 Cols) -->
+    <section class="lg:col-span-8 flex flex-col gap-5">
+
+      <!-- FOV Canvas Viewer Card -->
+      <div class="glass-card rounded-2xl p-4 md:p-5 flex flex-col gap-3 relative">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-eye text-sky-400"></i>
+            <h2 class="font-semibold text-sm text-slate-100">Live Field of View (FOV) Simulator</h2>
+            <span id="canvasSatelliteCountBadge" class="ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">3 Active Trails</span>
+          </div>
+
+          <!-- Mandatory Single Horizontal Row Legend Badges -->
+          <div class="flex flex-row items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar py-1 text-xs">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/30 font-medium">
+              <span class="w-2 h-2 rounded-full bg-astro-target animate-pulse"></span> Target Direct
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-medium">
+              <span class="w-2 h-2 rounded-full bg-astro-across"></span> Across Frame
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 font-medium">
+              <span class="w-2 h-2 rounded-full bg-astro-near"></span> Near-miss
+            </span>
+          </div>
+        </div>
+
+        <!-- Canvas Container with Vector Clipping -->
+        <div class="relative w-full aspect-video sm:aspect-[16/9] bg-slate-950 rounded-xl overflow-hidden border border-white/10 flex items-center justify-center shadow-inner">
+          <canvas id="fovCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+          <!-- Sky Center Reticle Legend Overlay -->
+          <div class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono text-slate-300 pointer-events-none">
+            <div id="canvasTargetText" class="text-sky-400 font-bold">M31 Andromeda</div>
+            <div id="canvasCoordsText" class="text-slate-400 text-[10px]">RA 00h 42m | DEC +41° 16'</div>
+            <div id="canvasFovText" class="text-slate-400 text-[10px]">FOV: 3.55° x 2.00°</div>
+          </div>
+
+          <!-- Clean Window Overlay Banner (when clean window is active) -->
+          <div id="cleanWindowBanner" class="hidden absolute top-3 right-3 bg-emerald-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-emerald-500/40 text-xs font-semibold text-emerald-200 flex items-center gap-2 shadow-lg">
+            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span>0 Trails Crossing Target FOV</span>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-400 flex items-center justify-between">
+          <span>* Satellite positions clipped to sensor boundary ($\pm 3.55^\circ \times \pm 2.0^\circ$). Tapping satellite highlights path.</span>
+          <span class="font-mono text-slate-500">North Up / East Left</span>
+        </p>
+      </div>
+
+      <!-- Interactive Timeline Slider & Gap Analyzer Card -->
+      <div class="glass-card rounded-2xl p-4 md:p-5 flex flex-col gap-3">
+        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-chart-gantt text-sky-400"></i>
+            <h2 class="font-semibold text-sm text-slate-100">Night Timeline & Satellite Pass Density</h2>
+          </div>
+          <button onclick="openGuideModal('timeline-guide')" class="text-slate-400 hover:text-sky-400 transition text-xs" title="Help on Timeline">
+            <i class="fa-regular fa-circle-question text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Interactive Timeline Bar Container -->
+        <div class="relative pt-6 pb-2">
+          <!-- Timeline Time Scale Markers -->
+          <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1 px-1">
+            <span>08:30 PM (Dusk)</span>
+            <span>11:00 PM</span>
+            <span>01:30 AM</span>
+            <span>03:30 AM</span>
+            <span>05:30 AM (Dawn)</span>
+          </div>
+
+          <!-- Timeline Track Bar -->
+          <div id="timelineTrack" class="relative w-full h-12 bg-slate-950 rounded-xl border border-white/10 overflow-hidden cursor-pointer">
+            <!-- Satellite Passes Rendering Bar -->
+            <div id="timelineSatPassesContainer" class="absolute inset-0 pointer-events-none"></div>
+
+            <!-- Longest Clean Window Highlight Indicator -->
+            <div id="cleanWindowHighlight" class="absolute top-0 bottom-0 bg-emerald-500/20 border-x-2 border-emerald-400 pointer-events-none flex items-center justify-center">
+              <span class="text-[9px] font-mono font-bold text-emerald-300 bg-slate-950/80 px-1 rounded border border-emerald-500/30">CLEAN GAP</span>
+            </div>
+
+            <!-- Active User Selected Session Box Overlay -->
+            <div id="sessionWindowOverlay" class="absolute top-0 bottom-0 bg-sky-500/25 border-2 border-sky-400 rounded-md shadow-lg shadow-sky-500/20 cursor-grab active:cursor-grabbing flex items-center justify-between px-1">
+              <div class="w-1.5 h-6 bg-sky-300 rounded-full"></div>
+              <span id="sessionOverlayLabel" class="text-[10px] font-mono font-bold text-sky-100 bg-slate-900/90 px-1.5 py-0.5 rounded border border-sky-400/40 select-none">120 min</span>
+              <div class="w-1.5 h-6 bg-sky-300 rounded-full"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mt-2">
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500"></span> Target Pass</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> Across Frame</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500/50 border border-emerald-400"></span> Clean Window Gap</span>
+            </div>
+            <span id="cleanGapStatsText" class="font-mono text-emerald-400 font-medium">Longest Clean Window: 01:15 AM - 03:45 AM (2h 30m)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session Impact & Efficiency Metrics -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="glass-card rounded-2xl p-3.5 flex flex-col gap-1">
+          <span class="text-[11px] text-slate-400 font-medium">Total Exposures</span>
+          <span id="statTotalSubs" class="text-xl font-bold font-mono text-slate-100">205</span>
+          <span id="statSubTimeText" class="text-[10px] text-slate-500">30s each + 5s overhead</span>
+        </div>
+
+        <div class="glass-card rounded-2xl p-3.5 flex flex-col gap-1">
+          <span class="text-[11px] text-slate-400 font-medium">Corrupted Subs</span>
+          <span id="statCorruptedSubs" class="text-xl font-bold font-mono text-red-400">8 subs</span>
+          <span id="statCorruptionPct" class="text-[10px] text-red-400/80 font-medium">3.9% lost frame rate</span>
+        </div>
+
+        <div class="glass-card rounded-2xl p-3.5 flex flex-col gap-1">
+          <span class="text-[11px] text-slate-400 font-medium">Clean Integration Time</span>
+          <span id="statCleanTime" class="text-xl font-bold font-mono text-emerald-400">1h 38m</span>
+          <span class="text-[10px] text-slate-500">Usable signal data</span>
+        </div>
+
+        <div class="glass-card rounded-2xl p-3.5 flex flex-col gap-1">
+          <span class="text-[11px] text-slate-400 font-medium">Efficiency Score</span>
+          <span id="statEfficiencyScore" class="text-xl font-bold font-mono text-sky-400">96.1%</span>
+          <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+            <div id="statEfficiencyBar" class="h-full bg-sky-400 rounded-full" style="width: 96.1%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Satellite Pass Table & Detailed Info Section -->
+      <div class="glass-card rounded-2xl p-4 md:p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-sky-400"></i>
+            <h2 class="font-semibold text-sm text-slate-100">Satellites Active in Session Window</h2>
+          </div>
+          <span id="satListCountText" class="text-xs text-slate-400 font-mono">Showing 3 satellites</span>
+        </div>
+
+        <!-- Satellite Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-white/10 text-slate-400 font-medium text-[11px] uppercase tracking-wider">
+                <th class="py-2.5 px-3">Satellite Name</th>
+                <th class="py-2.5 px-3">NORAD ID</th>
+                <th class="py-2.5 px-3">Crossing Time</th>
+                <th class="py-2.5 px-3">Pass Type</th>
+                <th class="py-2.5 px-3">Max Alt</th>
+                <th class="py-2.5 px-3">Corrupted Subs</th>
+                <th class="py-2.5 px-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="satelliteTableBody" class="divide-y divide-white/5 font-mono">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Detailed Satellite Info Card (Re-added Popup / Expanded Panel) -->
+        <div id="satelliteDetailCard" class="hidden bg-slate-900/90 rounded-xl p-4 border border-sky-500/30 flex flex-col gap-3 relative animate-fadeIn">
+          <button onclick="closeSatelliteDetail()" class="absolute top-3 right-3 text-slate-400 hover:text-white transition">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+          
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/40 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-satellite"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 id="detailSatName" class="font-bold text-sm text-white font-sans">ISS (ZARYA)</h3>
+                <span id="detailSatNorad" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-sky-300 border border-white/10">NORAD 25544</span>
+              </div>
+              <p id="detailSatOperator" class="text-xs text-slate-400 font-sans">Commercial Constellation / NASA • Space Station</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-white/10 text-xs font-mono">
+            <div>
+              <span class="text-slate-500 block text-[10px] font-sans">Pass Horizon Start:</span>
+              <span id="detailSatPassStart" class="text-slate-200">09:42:15 PM</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px] font-sans">Peak FOV Crossing:</span>
+              <span id="detailSatCrossing" class="text-sky-400 font-semibold">09:43:10 PM</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px] font-sans">Estimated Mag / Altitude:</span>
+              <span id="detailSatMag" class="text-slate-200">-2.1 mag • 420 km</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px] font-sans">Pass Classification:</span>
+              <span id="detailSatPassType" class="text-red-400 font-semibold">Through Target Center</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+
+  <!-- User Guide Modal Container -->
+  <div id="guideModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card max-w-3xl w-full max-h-[85vh] rounded-2xl p-6 flex flex-col gap-4 overflow-y-auto relative border border-white/10 shadow-2xl">
+      
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <h2 class="text-lg font-bold text-white">Astrophotography Satellite Predictor Guide</h2>
+        </div>
+        <button onclick="closeGuideModal()" class="text-slate-400 hover:text-white p-2 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-5 text-xs text-slate-300 leading-relaxed">
+        
+        <!-- Guide Section 1 -->
+        <div id="target-guide" class="scroll-mt-4">
+          <h3 class="font-bold text-sm text-sky-400 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-crosshairs"></i> 1. Sky Target & Optics Field of View
+          </h3>
+          <p>Select your astro-imaging target object (e.g. M31 Andromeda) and smart telescope preset (DWARF II, Seestar S50, Vespera, eVscope). The simulator scales the Field of View (FOV) rectangle precisely according to sensor and optical focal length, vector-clipping satellite orbital trails to match what your camera sensor records.</p>
+        </div>
+
+        <!-- Guide Section 2 -->
+        <div id="session-guide" class="scroll-mt-4">
+          <h3 class="font-bold text-sm text-sky-400 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-sliders"></i> 2. Photography Session Window & Longest Clean Window
+          </h3>
+          <p>Adjust your planned imaging window start time and total exposure duration using the sliders or duration buttons. Click <strong class="text-emerald-400">"Select Longest Clean Window"</strong> to automatically snap your session start and duration to the single largest gap tonight where zero satellites cross your FOV!</p>
+        </div>
+
+        <!-- Guide Section 3 -->
+        <div id="timeline-guide" class="scroll-mt-4">
+          <h3 class="font-bold text-sm text-sky-400 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-chart-gantt"></i> 3. Interactive Timeline & Pass Classification
+          </h3>
+          <p>The timeline illustrates satellite pass density from Astronomical Dusk to Dawn. Trails are color coded:</p>
+          <ul class="list-disc list-inside mt-1 space-y-1 text-slate-400 pl-2">
+            <li><strong class="text-red-400">Target Direct (Red):</strong> Satellite cuts through center target interest zone.</li>
+            <li><strong class="text-amber-400">Across Frame (Orange):</strong> Satellite passes through sensor frame boundary.</li>
+            <li><strong class="text-purple-400">Near-miss (Purple):</strong> Satellite passes within 1.5 degrees of FOV frame edge.</li>
+            <li><strong class="text-emerald-400">Mint Green Overlay:</strong> Highlighted continuous gap with zero frame-corrupting passes.</li>
+          </ul>
+        </div>
+
+        <!-- Guide Section 4 -->
+        <div>
+          <h3 class="font-bold text-sm text-sky-400 mb-1 flex items-center gap-2">
+            <i class="fa-solid fa-microchip"></i> 4. Frame Corruption & Sub-exposure Calculations
+          </h3>
+          <p>Based on sub-exposure length (e.g. 30 seconds) plus readout overhead (e.g. 5 seconds), the engine calculates exactly how many individual sub-frames will contain satellite streaks. Subtracting corrupt subs yields your true clean integration time and overall session efficiency percentage.</p>
+        </div>
+
+      </div>
+
+      <div class="pt-3 border-t border-white/10 flex justify-end">
+        <button onclick="closeGuideModal()" class="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs transition">
+          Got it, return to app
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* Global Application State */
+    const state = {
+      target: 'M31',
+      targetName: 'M31 - Andromeda Galaxy',
+      targetCoords: { ra: '00h 42m', dec: '+41° 16\'' },
+      scope: 'dwarf_2',
+      fovWidth: 3.55,  // degrees
+      fovHeight: 2.00, // degrees
+      duskMinutes: 0,   // 08:30 PM = 0
+      dawnMinutes: 540, // 05:30 AM = 540 min
+      sessionStart: 60,  // 09:30 PM (60 min after dusk)
+      sessionDuration: 120, // 120 min
+      subExposure: 30, // seconds
+      overhead: 5,     // seconds
+      selectedSatId: null, // highlighted sat
+      satellites: []    // generated passes for night
+    };
+
+    /* Smart Telescope Preset Database */
+    const SCOPE_PROFILES = {
+      dwarf_2: { name: 'DWARFLAB DWARF II', w: 3.55, h: 2.00 },
+      dwarf_3: { name: 'DWARFLAB DWARF 3', w: 3.00, h: 1.70 },
+      seestar_s50: { name: 'ZWO Seestar S50', w: 1.29, h: 0.73 },
+      seestar_s30: { name: 'ZWO Seestar S30', w: 2.10, h: 1.20 },
+      vespera_pro: { name: 'Vaonis Vespera Pro', w: 1.60, h: 0.90 },
+      vespera_2: { name: 'Vaonis Vespera II', w: 2.50, h: 1.40 },
+      vespera_1: { name: 'Vaonis Vespera', w: 1.60, h: 0.90 },
+      stellina: { name: 'Vaonis Stellina', w: 1.00, h: 0.70 },
+      hestia: { name: 'Vaonis Hestia', w: 1.80, h: 1.80 },
+      evscope_2: { name: 'Unistellar eVscope 2', w: 0.75, h: 0.50 },
+      equinox_2: { name: 'Unistellar eQuinox 2', w: 0.75, h: 0.50 },
+      odyssey_pro: { name: 'Unistellar Odyssey Pro', w: 0.56, h: 0.37 },
+      custom: { name: 'Custom Optics Configuration', w: 3.55, h: 2.00 }
+    };
+
+    /* Sky Target Presets */
+    const TARGET_PROFILES = {
+      M31: { name: 'M31 - Andromeda Galaxy', ra: '00h 42m', dec: '+41° 16\'', type: 'galaxy' },
+      M42: { name: 'M42 - Orion Nebula', ra: '05h 35m', dec: '-05° 23\'', type: 'nebula' },
+      M45: { name: 'M45 - Pleiades Cluster', ra: '03h 47m', dec: '+24° 07\'', type: 'cluster' },
+      NGC7000: { name: 'NGC 7000 - North America', ra: '20h 58m', dec: '+44° 20\'', type: 'nebula' },
+      M13: { name: 'M13 - Great Hercules Cluster', ra: '16h 41m', dec: '+36° 27\'', type: 'cluster' },
+      CUSTOM: { name: 'Custom Sky Field', ra: '12h 00m', dec: '+00° 00\'', type: 'stars' }
+    };
+
+    /* Generate Realistic Satellite Pass Data for the Night */
+    function generateSatelliteDatabase() {
+      // Deterministic pseudo-random seed based on target
+      const satList = [
+        { name: 'ISS (ZARYA)', norad: 25544, operator: 'NASA / International', purpose: 'Space Station', mag: '-2.4', alt: '420 km' },
+        { name: 'STARLINK-3104', norad: 52104, operator: 'SpaceX', purpose: 'Broadband Constellation', mag: '+4.8', alt: '550 km' },
+        { name: 'STARLINK-5412', norad: 58921, operator: 'SpaceX', purpose: 'Broadband Constellation', mag: '+5.1', alt: '550 km' },
+        { name: 'ONEWEB-0214', norad: 48512, operator: 'Eutelsat OneWeb', purpose: 'Global Internet', mag: '+6.2', alt: '1,200 km' },
+        { name: 'TIANGONG CSS', norad: 48274, operator: 'CMSA China', purpose: 'Space Station', mag: '+0.5', alt: '380 km' },
+        { name: 'HST (HUBBLE)', norad: 20580, operator: 'NASA / ESA', purpose: 'Space Telescope', mag: '+3.1', alt: '535 km' },
+        { name: 'STARLINK-2089', norad: 49811, operator: 'SpaceX', purpose: 'Broadband Constellation', mag: '+4.5', alt: '550 km' },
+        { name: 'NOAA 19', norad: 33591, operator: 'NOAA / USA', purpose: 'Weather Satellite', mag: '+5.8', alt: '850 km' },
+        { name: 'COSMOS 2542', norad: 44797, operator: 'Roscosmos', purpose: 'Inspection / Defense', mag: '+6.0', alt: '400 km' },
+        { name: 'STARLINK-6102', norad: 60124, operator: 'SpaceX', purpose: 'Broadband Constellation', mag: '+5.3', alt: '550 km' },
+        { name: 'AMAZON KUIPER-01', norad: 57920, operator: 'Amazon Kuiper', purpose: 'Broadband Internet', mag: '+5.5', alt: '590 km' },
+        { name: 'FLOCK 4A-12', norad: 44211, operator: 'Planet Labs', purpose: 'Earth Imaging', mag: '+6.8', alt: '480 km' }
+      ];
+
+      // Fixed times across the 540-minute night (08:30 PM to 05:30 AM)
+      const passTimes = [
+        { start: 18, duration: 2.5, type: 'across', path: { x1: -0.4, y1: -0.8, x2: 0.6, y2: 0.9 } },
+        { start: 42, duration: 3.0, type: 'near', path: { x1: -1.2, y1: -0.5, x2: -1.1, y2: 1.1 } },
+        { start: 85, duration: 2.0, type: 'target', path: { x1: -0.8, y1: 0.2, x2: 0.9, y2: -0.1 } },
+        { start: 130, duration: 1.8, type: 'across', path: { x1: 0.1, y1: -1.1, x2: -0.7, y2: 0.8 } },
+        { start: 175, duration: 2.2, type: 'near', path: { x1: 1.1, y1: -0.9, x2: 1.2, y2: 0.7 } },
+        // Notice gap from 220 to 365 = 145 minutes clean gap! (00:10 AM to 02:35 AM)
+        { start: 365, duration: 2.8, type: 'target', path: { x1: -0.9, y1: -0.6, x2: 0.8, y2: 0.7 } },
+        { start: 410, duration: 2.1, type: 'across', path: { x1: -0.8, y1: 0.9, x2: 0.7, y2: -0.8 } },
+        { start: 455, duration: 1.9, type: 'near', path: { x1: -1.3, y1: -0.2, x2: 1.3, y2: 0.2 } },
+        { start: 500, duration: 3.2, type: 'target', path: { x1: 0.3, y1: -0.9, x2: -0.2, y2: 0.9 } }
+      ];
+
+      state.satellites = passTimes.map((pt, idx) => {
+        const meta = satList[idx % satList.length];
+        return {
+          id: `sat_${idx}_${meta.norad}`,
+          name: meta.name,
+          norad: meta.norad,
+          operator: meta.operator,
+          purpose: meta.purpose,
+          mag: meta.mag,
+          alt: meta.alt,
+          passStart: pt.start, // minutes from dusk
+          passEnd: pt.start + pt.duration,
+          passType: pt.type, // 'target', 'across', 'near'
+          path: pt.path
         };
+      });
+    }
 
-        // Simulated full-night satellite dataset across dusk to dawn twilight (551 min night)
-        // Night start: 08:37 PM (minute 0), Night end: 05:48 AM (minute 551)
-        const SATELLITE_DATABASE = [
-            { id: 'sat_1', name: 'STARLINK-3012', norad: '51204', operator: 'SpaceX', purpose: 'Comms', alt: '550 km', min: 12, timeStr: '08:49 PM', dur: 24, path: [-3.8, 1.2, 3.8, -0.4] },
-            { id: 'sat_2', name: 'ONEWEB-0142', norad: '48210', operator: 'OneWeb', purpose: 'Comms', alt: '1200 km', min: 28, timeStr: '09:05 PM', dur: 38, path: [-2.1, -1.9, 2.8, 1.8] },
-            { id: 'sat_3', name: 'STARLINK-1829', norad: '47902', operator: 'SpaceX', purpose: 'Comms', alt: '550 km', min: 45, timeStr: '09:22 PM', dur: 19, path: [-3.5, 0.1, 3.5, -0.1] },
-            { id: 'sat_4', name: 'ISS (ZARYA)', norad: '25544', operator: 'International', purpose: 'Space Station', alt: '418 km', min: 230, timeStr: '12:27 AM', dur: 21, path: [-3.2, 0.5, -1.2, 0.9] },
-            { id: 'sat_5', name: 'ONEWEB-0081', norad: '55102', operator: 'OneWeb', purpose: 'Comms', alt: '1200 km', min: 200, timeStr: '11:57 PM', dur: 35, path: [-3.8, 0.1, 3.8, -0.1] },
-            { id: 'sat_6', name: 'NOAA 19', norad: '33591', operator: 'NOAA', purpose: 'Weather', alt: '850 km', min: 72, timeStr: '09:49 PM', dur: 42, path: [-1.2, -1.9, 1.8, 1.9] },
-            { id: 'sat_7', name: 'STARLINK-5011', norad: '53912', operator: 'SpaceX', purpose: 'Comms', alt: '550 km', min: 88, timeStr: '10:05 PM', dur: 22, path: [-3.6, 1.6, 3.6, -1.5] },
-            { id: 'sat_8', name: 'COSMOS 2542', norad: '44797', operator: 'Roscosmos', purpose: 'MilSat', alt: '380 km', min: 110, timeStr: '10:27 PM', dur: 18, path: [-2.8, -1.5, 2.5, 1.2] },
-            { id: 'sat_9', name: 'CZ-2D R/B', norad: '43102', operator: 'CNSA', purpose: 'Rocket Body', alt: '620 km', min: 125, timeStr: '10:42 PM', dur: 31, path: [-3.5, -0.8, 3.5, 0.6] },
-            // Deep night gap between minute 139 (10:56 PM) and min 200 (11:57 PM)
-            { id: 'sat_10', name: 'TIANGONG', norad: '48274', operator: 'CNSA', purpose: 'Space Station', alt: '390 km', min: 280, timeStr: '01:17 AM', dur: 26, path: [-3.8, -1.1, 3.8, 1.3] },
-            { id: 'sat_11', name: 'HST (HUBBLE)', norad: '20580', operator: 'NASA/ESA', purpose: 'Telescope', alt: '535 km', min: 320, timeStr: '01:57 AM', dur: 29, path: [-2.0, -1.8, 2.2, 1.8] },
-            { id: 'sat_12', name: 'STARLINK-4102', norad: '52190', operator: 'SpaceX', purpose: 'Comms', alt: '550 km', min: 410, timeStr: '03:27 AM', dur: 20, path: [-3.7, 0.8, 3.7, -0.7] },
-            { id: 'sat_13', name: 'STARLINK-4188', norad: '52240', operator: 'SpaceX', purpose: 'Comms', alt: '550 km', min: 432, timeStr: '03:49 AM', dur: 22, path: [-3.8, 1.4, 3.8, -1.2] },
-            { id: 'sat_14', name: 'FLOCK 4E-1', norad: '45910', operator: 'Planet Labs', purpose: 'Imaging', alt: '490 km', min: 460, timeStr: '04:17 AM', dur: 27, path: [-1.5, -1.9, 1.2, 1.9] },
-            { id: 'sat_15', name: 'ONEWEB-0312', norad: '50122', operator: 'OneWeb', purpose: 'Comms', alt: '1200 km', min: 485, timeStr: '04:42 AM', dur: 36, path: [-3.8, -0.2, 3.8, 0.2] },
-            { id: 'sat_16', name: 'STARLINK-5890', norad: '56102', operator: 'SpaceX', purpose: 'Comms', alt: '550 km', min: 505, timeStr: '05:02 AM', dur: 21, path: [-3.5, -0.9, 3.5, 0.8] },
-            { id: 'sat_17', name: 'STARLINK-5912', norad: '56140', operator: 'SpaceX', purpose: 'Comms', alt: '550 km', min: 525, timeStr: '05:22 AM', dur: 23, path: [-3.8, 0.0, 3.8, -0.1] },
-            { id: 'sat_18', name: 'METEOR M2-2', norad: '44421', operator: 'Roscosmos', purpose: 'Weather', alt: '820 km', min: 542, timeStr: '05:39 AM', dur: 40, path: [-2.5, -1.8, 2.5, 1.8] },
-        ];
+    /* Calculate Longest Continuous Satellite-Free Window */
+    function calculateLongestCleanWindow() {
+      // Filter passes that cross the FOV frame ('target' or 'across')
+      const corruptingPasses = state.satellites
+        .filter(s => s.passType === 'target' || s.passType === 'across')
+        .sort((a, b) => a.passStart - b.passStart);
 
-        // Global Active Application State
-        let state = {
-            telescopeKey: 'dwarf_3',
-            subExpSec: 10,
-            timeMin: 0,
-            timeMax: 551,
-            selectedSatId: null,
-            activeFilter: 'all',
-            trailToggles: {
-                through: true,
-                across: true,
-                miss: true
-            }
-        };
+      // Night boundary: 0 to 540 min
+      let maxGapStart = 0;
+      let maxGapEnd = 540;
+      let maxGapDuration = 0;
 
-        // Initialize App on DOM Load
-        window.addEventListener('DOMContentLoaded', () => {
-            populateSubExpDropdown();
-            initEventListeners();
-            drawTimelineDensityCanvas();
-            updateDashboard();
-        });
+      let currentPoint = 0;
 
-        // Populate 10s to 300s in 5s increments
-        function populateSubExpDropdown() {
-            const select = document.getElementById('subexp-select');
-            select.innerHTML = '';
-            for (let s = 10; s <= 300; s += 5) {
-                const opt = document.createElement('option');
-                opt.value = s;
-                opt.textContent = `${s} seconds`;
-                if (s === 10) opt.selected = true;
-                select.appendChild(opt);
-            }
+      for (let i = 0; i < corruptingPasses.length; i++) {
+        const pass = corruptingPasses[i];
+        if (pass.passStart > currentPoint) {
+          const gap = pass.passStart - currentPoint;
+          if (gap > maxGapDuration) {
+            maxGapDuration = gap;
+            maxGapStart = currentPoint;
+            maxGapEnd = pass.passStart;
+          }
+        }
+        if (pass.passEnd > currentPoint) {
+          currentPoint = pass.passEnd;
+        }
+      }
+
+      // Check final gap until dawn (540 min)
+      if (540 - currentPoint > maxGapDuration) {
+        maxGapDuration = 540 - currentPoint;
+        maxGapStart = currentPoint;
+        maxGapEnd = 540;
+      }
+
+      return {
+        start: maxGapStart,
+        end: maxGapEnd,
+        duration: maxGapDuration
+      };
+    }
+
+    /* Format minutes from dusk (08:30 PM) to readable time */
+    function formatTime(minutesFromDusk) {
+      const baseHour = 20; // 8:00 PM
+      const baseMin = 30;  // 8:30 PM
+      const totalMin = baseHour * 60 + baseMin + Math.round(minutesFromDusk);
+      
+      const hours = Math.floor((totalMin / 60) % 24);
+      const mins = Math.floor(totalMin % 60);
+      
+      const displayHours = hours % 12 === 0 ? 12 : hours % 12;
+      const ampm = hours >= 12 && hours < 24 ? 'PM' : 'AM';
+      
+      const hh = displayHours.toString().padStart(2, '0');
+      const mm = mins.toString().padStart(2, '0');
+      return `${hh}:${mm} ${ampm}`;
+    }
+
+    /* Snap Session directly to Longest Clean Window */
+    function snapToLongestCleanWindow() {
+      const cleanGap = calculateLongestCleanWindow();
+      state.sessionStart = Math.round(cleanGap.start);
+      state.sessionDuration = Math.round(cleanGap.duration);
+
+      // Sync Range input and text inputs
+      document.getElementById('sessionStartRange').value = state.sessionStart;
+      document.getElementById('customDurationInput').value = state.sessionDuration;
+
+      // Deselect satellite detail if active
+      state.selectedSatId = null;
+
+      recalculateSession();
+    }
+
+    /* Event Handlers */
+    function handleTargetChange() {
+      const select = document.getElementById('targetSelect');
+      state.target = select.value;
+      const profile = TARGET_PROFILES[state.target] || TARGET_PROFILES.M31;
+      state.targetName = profile.name;
+      state.targetCoords = { ra: profile.ra, dec: profile.dec };
+      
+      document.getElementById('headerTargetName').textContent = profile.name;
+      document.getElementById('canvasTargetText').textContent = profile.name;
+      document.getElementById('canvasCoordsText').textContent = `RA ${profile.ra} | DEC ${profile.dec}`;
+
+      generateSatelliteDatabase();
+      recalculateSession();
+    }
+
+    function handleScopeChange() {
+      const scopeVal = document.getElementById('scopeSelect').value;
+      state.scope = scopeVal;
+      const profile = SCOPE_PROFILES[scopeVal] || SCOPE_PROFILES.dwarf_2;
+      
+      state.fovWidth = profile.w;
+      state.fovHeight = profile.h;
+
+      document.getElementById('fovWidthInput').value = profile.w;
+      document.getElementById('fovHeightInput').value = profile.h;
+      document.getElementById('canvasFovText').textContent = `FOV: ${profile.w.toFixed(2)}° x ${profile.h.toFixed(2)}°`;
+
+      recalculateSession();
+    }
+
+    function updateCustomScope() {
+      state.scope = 'custom';
+      document.getElementById('scopeSelect').value = 'custom';
+      state.fovWidth = parseFloat(document.getElementById('fovWidthInput').value) || 3.55;
+      state.fovHeight = parseFloat(document.getElementById('fovHeightInput').value) || 2.00;
+      document.getElementById('canvasFovText').textContent = `FOV: ${state.fovWidth.toFixed(2)}° x ${state.fovHeight.toFixed(2)}°`;
+      recalculateSession();
+    }
+
+    function handleSessionSliderChange() {
+      state.sessionStart = parseInt(document.getElementById('sessionStartRange').value);
+      recalculateSession();
+    }
+
+    function setSessionDuration(mins) {
+      state.sessionDuration = mins;
+      document.getElementById('customDurationInput').value = mins;
+      
+      // Highlight button state
+      document.querySelectorAll('.duration-btn').forEach(btn => {
+        if (btn.textContent === `${mins}m`) {
+          btn.className = 'duration-btn py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 font-mono text-[11px] transition';
+        } else {
+          btn.className = 'duration-btn py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/5 font-mono text-[11px] transition';
+        }
+      });
+
+      recalculateSession();
+    }
+
+    function handleCustomDurationChange() {
+      const val = parseInt(document.getElementById('customDurationInput').value) || 120;
+      state.sessionDuration = Math.min(Math.max(val, 10), 540);
+      recalculateSession();
+    }
+
+    function handleSubExpChange() {
+      state.subExposure = parseInt(document.getElementById('subExposureSelect').value);
+      recalculateSession();
+    }
+
+    /* Master Recalculation Engine */
+    function recalculateSession() {
+      const sessionEnd = state.sessionStart + state.sessionDuration;
+
+      // Update Labels
+      document.getElementById('sessionStartLabel').textContent = formatTime(state.sessionStart);
+      document.getElementById('statSubTimeText').textContent = `${state.subExposure}s each + ${state.overhead}s overhead`;
+
+      // Filter satellites active strictly during [sessionStart, sessionEnd]
+      const activeSatellites = state.satellites.filter(sat => {
+        return sat.passStart < sessionEnd && sat.passEnd > state.sessionStart;
+      });
+
+      // Count corrupting passes (Target Direct or Across Frame)
+      const corruptingActiveSats = activeSatellites.filter(s => s.passType === 'target' || s.passType === 'across');
+
+      // Sub-exposure frame math
+      const cycleTimeSec = state.subExposure + state.overhead;
+      const totalSessionSec = state.sessionDuration * 60;
+      const totalSubs = Math.floor(totalSessionSec / cycleTimeSec);
+
+      // Estimate corrupted sub-frames
+      let corruptedSubs = 0;
+      corruptingActiveSats.forEach(sat => {
+        const passOverlapStart = Math.max(sat.passStart, state.sessionStart);
+        const passOverlapEnd = Math.min(sat.passEnd, sessionEnd);
+        const passOverlapSec = (passOverlapEnd - passOverlapStart) * 60;
+        // Average 1 to 2 sub-frames ruined per pass
+        const subsLost = Math.ceil(passOverlapSec / cycleTimeSec) + 1;
+        corruptedSubs += subsLost;
+      });
+      corruptedSubs = Math.min(corruptedSubs, totalSubs);
+
+      const cleanSubs = totalSubs - corruptedSubs;
+      const cleanSec = cleanSubs * state.subExposure;
+      const cleanHours = Math.floor(cleanSec / 3600);
+      const cleanMins = Math.floor((cleanSec % 3600) / 60);
+
+      const efficiencyPct = totalSubs > 0 ? ((cleanSubs / totalSubs) * 100).toFixed(1) : '100.0';
+
+      // Update Stat UI Elements
+      document.getElementById('statTotalSubs').textContent = totalSubs;
+      document.getElementById('statCorruptedSubs').textContent = `${corruptedSubs} sub${corruptedSubs === 1 ? '' : 's'}`;
+      document.getElementById('statCorruptionPct').textContent = `${((corruptedSubs / (totalSubs || 1)) * 100).toFixed(1)}% lost frame rate`;
+      document.getElementById('statCleanTime').textContent = `${cleanHours}h ${cleanMins}m`;
+      document.getElementById('statEfficiencyScore').textContent = `${efficiencyPct}%`;
+      document.getElementById('statEfficiencyBar').style.width = `${efficiencyPct}%`;
+
+      // Update Clean Window Gap info badge
+      const cleanGap = calculateLongestCleanWindow();
+      const cleanGapText = `${formatTime(cleanGap.start)} - ${formatTime(cleanGap.end)} (${Math.floor(cleanGap.duration / 60)}h ${Math.round(cleanGap.duration % 60)}m)`;
+      document.getElementById('cleanGapStatsText').textContent = `Longest Clean Gap: ${cleanGapText}`;
+      document.getElementById('headerCleanWindowText').textContent = cleanGapText;
+
+      // Update FOV Satellite Count Badge
+      const canvasBadge = document.getElementById('canvasSatelliteCountBadge');
+      const cleanBanner = document.getElementById('cleanWindowBanner');
+      
+      if (corruptingActiveSats.length === 0) {
+        canvasBadge.className = 'ml-2 text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        canvasBadge.textContent = '0 Trails Crossing Target';
+        cleanBanner.classList.remove('hidden');
+      } else {
+        canvasBadge.className = 'ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        canvasBadge.textContent = `${corruptingActiveSats.length} Active Trail${corruptingActiveSats.length === 1 ? '' : 's'}`;
+        cleanBanner.classList.add('hidden');
+      }
+
+      // Render Sub-components
+      renderSatelliteTable(activeSatellites);
+      renderTimeline(cleanGap);
+      drawFOVCanvas(activeSatellites);
+    }
+
+    /* Draw FOV Canvas Simulator */
+    function drawFOVCanvas(activeSatellites) {
+      const canvas = document.getElementById('fovCanvas');
+      const ctx = canvas.getContext('2d');
+
+      // Set internal resolution matching display aspect
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio || 800;
+      canvas.height = rect.height * window.devicePixelRatio || 450;
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Clear Canvas Dark Sky
+      ctx.fillStyle = '#070A10';
+      ctx.fillRect(0, 0, w, h);
+
+      // Background Starfield Simulation
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      for (let i = 0; i < 120; i++) {
+        const sx = (Math.sin(i * 91.2) * 0.5 + 0.5) * w;
+        const sy = (Math.cos(i * 37.8) * 0.5 + 0.5) * h;
+        const sr = (Math.sin(i * 12.4) * 0.5 + 0.5) * 1.5 + 0.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Sky Target Background Rendering (Galaxy/Nebula Glow)
+      const centerX = w / 2;
+      const centerY = h / 2;
+
+      ctx.save();
+      if (state.target === 'M31') {
+        // Andromeda Galaxy Ellipse Glow
+        const grad = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, w * 0.28);
+        grad.addColorStop(0, 'rgba(224, 242, 254, 0.8)');
+        grad.addColorStop(0.3, 'rgba(56, 189, 248, 0.25)');
+        grad.addColorStop(0.7, 'rgba(129, 140, 248, 0.08)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        ctx.translate(centerX, centerY);
+        ctx.rotate(-Math.PI / 6);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, w * 0.28, h * 0.18, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Nebula Radial Glow
+        const grad = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, w * 0.22);
+        grad.addColorStop(0, 'rgba(244, 114, 182, 0.7)');
+        grad.addColorStop(0.4, 'rgba(192, 132, 252, 0.2)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, w * 0.22, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Camera Sensor Reticle Grid Lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(centerX, 0); ctx.lineTo(centerX, h);
+      ctx.moveTo(0, centerY); ctx.lineTo(w, centerY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Sensor Target Boundary Box ($\pm 3.55^\circ \times \pm 2.0^\circ$)
+      const marginX = w * 0.08;
+      const marginY = h * 0.08;
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(marginX, marginY, w - marginX * 2, h - marginY * 2);
+
+      // Draw Vector-Clipped Active Satellite Trails
+      activeSatellites.forEach(sat => {
+        const isSelected = state.selectedSatId === sat.id;
+        
+        // Map normalized coordinates (-1 to 1) to canvas canvas pixels
+        const x1 = centerX + sat.path.x1 * (w * 0.4);
+        const y1 = centerY + sat.path.y1 * (h * 0.4);
+        const x2 = centerX + sat.path.x2 * (w * 0.4);
+        const y2 = centerY + sat.path.y2 * (h * 0.4);
+
+        let strokeColor = '#FF9500'; // Across frame (Orange)
+        if (sat.passType === 'target') strokeColor = '#FF3B30'; // Direct Target (Red)
+        if (sat.passType === 'near') strokeColor = '#BF5AF2'; // Near miss (Purple)
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+
+        if (isSelected) {
+          ctx.strokeStyle = '#38BDF8'; // Bright Cyan highlight
+          ctx.lineWidth = 4;
+          ctx.shadowColor = '#38BDF8';
+          ctx.shadowBlur = 12;
+        } else {
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = sat.passType === 'target' ? 2.5 : 1.8;
         }
 
-        // Attach DOM listeners
-        function initEventListeners() {
-            document.getElementById('telescope-select').addEventListener('change', (e) => {
-                state.telescopeKey = e.target.value;
-                updateDashboard();
-            });
+        ctx.stroke();
 
-            document.getElementById('subexp-select').addEventListener('change', (e) => {
-                state.subExpSec = parseInt(e.target.value, 10);
-                updateDashboard();
-            });
+        // Draw Arrow / Motion Indicator Head
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        const headLen = isSelected ? 10 : 7;
+        ctx.fillStyle = isSelected ? '#38BDF8' : strokeColor;
+        ctx.beginPath();
+        ctx.arc(x2, y2, headLen / 2, 0, Math.PI * 2);
+        ctx.fill();
 
-            window.addEventListener('resize', () => {
-                renderSkyView();
-                drawTimelineDensityCanvas();
-            });
+        // Label on Canvas
+        ctx.font = isSelected ? 'bold 11px Inter' : '10px Inter';
+        ctx.fillStyle = isSelected ? '#38BDF8' : 'rgba(255, 255, 255, 0.7)';
+        ctx.fillText(sat.name, x1 + 6, y1 - 6);
+
+        ctx.restore();
+      });
+    }
+
+    /* Render Interactive Timeline Slider Bar */
+    function renderTimeline(cleanGap) {
+      const passesContainer = document.getElementById('timelineSatPassesContainer');
+      passesContainer.innerHTML = '';
+
+      // Total night length = 540 min
+      const totalNight = 540;
+
+      // Render Satellite Pass Marks on Timeline
+      state.satellites.forEach(sat => {
+        const leftPct = (sat.passStart / totalNight) * 100;
+        const widthPct = Math.max(((sat.passEnd - sat.passStart) / totalNight) * 100, 0.8);
+
+        let bgClass = 'bg-amber-500';
+        if (sat.passType === 'target') bgClass = 'bg-red-500';
+        if (sat.passType === 'near') bgClass = 'bg-purple-500';
+
+        const mark = document.createElement('div');
+        mark.className = `absolute top-1 bottom-1 ${bgClass} rounded-sm opacity-80`;
+        mark.style.left = `${leftPct}%`;
+        mark.style.width = `${widthPct}%`;
+        mark.title = `${sat.name} (${sat.passType}) - ${formatTime(sat.passStart)}`;
+        passesContainer.appendChild(mark);
+      });
+
+      // Position Clean Gap Highlight Box
+      const cleanHighlight = document.getElementById('cleanWindowHighlight');
+      const cleanLeft = (cleanGap.start / totalNight) * 100;
+      const cleanWidth = ((cleanGap.end - cleanGap.start) / totalNight) * 100;
+      cleanHighlight.style.left = `${cleanLeft}%`;
+      cleanHighlight.style.width = `${cleanWidth}%`;
+
+      // Position User Session Box Overlay
+      const sessionOverlay = document.getElementById('sessionWindowOverlay');
+      const sessionLeft = (state.sessionStart / totalNight) * 100;
+      const sessionWidth = (state.sessionDuration / totalNight) * 100;
+      
+      sessionOverlay.style.left = `${sessionLeft}%`;
+      sessionOverlay.style.width = `${sessionWidth}%`;
+      document.getElementById('sessionOverlayLabel').textContent = `${state.sessionDuration} min`;
+    }
+
+    /* Render Satellite List Table */
+    function renderSatelliteTable(activeSatellites) {
+      const tbody = document.getElementById('satelliteTableBody');
+      tbody.innerHTML = '';
+
+      document.getElementById('satListCountText').textContent = `Showing ${activeSatellites.length} satellite${activeSatellites.length === 1 ? '' : 's'} in session`;
+
+      if (activeSatellites.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-6 text-center text-emerald-400 font-sans">
+              <i class="fa-solid fa-circle-check text-lg mb-1 block"></i>
+              <span>No satellites crossing FOV during this clean session window!</span>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      activeSatellites.forEach(sat => {
+        const tr = document.createElement('tr');
+        const isSelected = state.selectedSatId === sat.id;
+        tr.className = `hover:bg-white/5 cursor-pointer transition ${isSelected ? 'bg-sky-500/10 border-l-2 border-sky-400' : ''}`;
+        tr.onclick = () => selectSatelliteDetail(sat);
+
+        let passBadge = '<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]">Across Frame</span>';
+        if (sat.passType === 'target') {
+          passBadge = '<span class="px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 text-[10px]">Target Direct</span>';
+        } else if (sat.passType === 'near') {
+          passBadge = '<span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px]">Near-miss</span>';
         }
 
-        // ==========================================
-        // DYNAMIC SATELLITE CALCULATIONS & GEOMETRY
-        // ==========================================
-
-        function getActiveSatellites() {
-            const scope = TELESCOPE_PRESETS[state.telescopeKey];
-            const halfW = scope.fovW / 2;
-            const halfH = scope.fovH / 2;
-
-            return SATELLITE_DATABASE.filter(sat => sat.min >= state.timeMin && sat.min <= state.timeMax)
-                .map(sat => {
-                    const type = classifyTrailType(sat.path, halfW, halfH);
-                    return { ...sat, type };
-                });
-        }
-
-        // Classify if satellite vector passes through target center, across frame, or near-miss
-        function classifyTrailType(path, halfW, halfH) {
-            const [x1, y1, x2, y2] = path;
-            
-            // Check target center intersection (target ellipse ~0.35° x 0.22° at 0,0)
-            if (lineIntersectsBox(x1, y1, x2, y2, -0.25, -0.15, 0.25, 0.15)) {
-                return 'through';
-            }
-            // Check telescope FOV box intersection
-            if (lineIntersectsBox(x1, y1, x2, y2, -halfW, -halfH, halfW, halfH)) {
-                return 'across';
-            }
-            // Otherwise near-miss within context box
-            return 'miss';
-        }
-
-        // Segment vs Box Intersection Test (Liang-Barsky inspired algorithm)
-        function lineIntersectsBox(x1, y1, x2, y2, minX, minY, maxX, maxY) {
-            let p1 = -(x2 - x1), p2 = (x2 - x1);
-            let p3 = -(y2 - y1), p4 = (y2 - y1);
-            let q1 = x1 - minX,  q2 = maxX - x1;
-            let q3 = y1 - minY,  q4 = maxY - y1;
-
-            let u1 = 0, u2 = 1;
-            let p = [p1, p2, p3, p4];
-            let q = [q1, q2, q3, q4];
-
-            for (let i = 0; i < 4; i++) {
-                if (p[i] === 0) {
-                    if (q[i] < 0) return false;
-                } else {
-                    let t = q[i] / p[i];
-                    if (p[i] < 0 && u1 < t) u1 = t;
-                    if (p[i] > 0 && u2 > t) u2 = t;
-                }
-            }
-            return u1 <= u2;
-        }
-
-        // Liang-Barsky Bounding-Box Line Truncation algorithm for Sky Grid (-3.55 to +3.55, -2.0 to +2.0)
-        function clipLineToGrid(x1, y1, x2, y2, minX, minY, maxX, maxY) {
-            let u1 = 0, u2 = 1;
-            let dx = x2 - x1, dy = y2 - y1;
-
-            let p = [-dx, dx, -dy, dy];
-            let q = [x1 - minX, maxX - x1, y1 - minY, maxY - y1];
-
-            for (let i = 0; i < 4; i++) {
-                if (p[i] === 0) {
-                    if (q[i] < 0) return null; // Parallel and outside
-                } else {
-                    let t = q[i] / p[i];
-                    if (p[i] < 0) {
-                        if (t > u2) return null;
-                        if (t > u1) u1 = t;
-                    } else {
-                        if (t < u1) return null;
-                        if (t < u2) u2 = t;
-                    }
-                }
-            }
-
-            return {
-                cx1: x1 + u1 * dx,
-                cy1: y1 + u1 * dy,
-                cx2: x1 + u2 * dx,
-                cy2: y1 + u2 * dy
-            };
-        }
-
-        // ==========================================
-        // SKY VIEW CANVAS RENDERING ENGINE
-        // ==========================================
-
-        function renderSkyView() {
-            const canvas = document.getElementById('skyViewCanvas');
-            if (!canvas) return;
-
-            const rect = canvas.parentElement.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-
-            const ctx = canvas.getContext('2d');
-            ctx.scale(dpr, dpr);
-
-            const width = rect.width;
-            const height = rect.height;
-
-            // Clear Background
-            ctx.fillStyle = '#070A0F';
-            ctx.fillRect(0, 0, width, height);
-
-            // Context Coordinates: Azimuth -3.55° to +3.55°, Altitude -2.0° to +2.0°
-            const maxAz = 3.55;
-            const maxAlt = 2.0;
-
-            const toCanvasX = (az) => width / 2 + (az / maxAz) * (width / 2);
-            const toCanvasY = (alt) => height / 2 - (alt / maxAlt) * (height / 2); // Invert Y for celestial coordinates
-
-            // 1. Draw Grid Lines
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
-            ctx.lineWidth = 1;
-            ctx.font = '10px JetBrains Mono, monospace';
-            ctx.fillStyle = '#64748B';
-            ctx.textAlign = 'center';
-
-            // Azimuth Grid (-3° to +3°)
-            for (let az = -3; az <= 3; az += 1) {
-                const x = toCanvasX(az);
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-                ctx.stroke();
-
-                ctx.fillText(`${az > 0 ? '+' : ''}${az}°`, x, height - 8);
-            }
-
-            // Altitude Grid (-1.5° to +1.5°)
-            ctx.textAlign = 'right';
-            for (let alt = -1.5; alt <= 1.5; alt += 0.5) {
-                if (alt === 0) continue;
-                const y = toCanvasY(alt);
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
-
-                ctx.fillText(`${alt > 0 ? '+' : ''}${alt.toFixed(1)}°`, width - 10, y + 3);
-            }
-
-            // Center Axis Lines
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-            ctx.beginPath();
-            ctx.moveTo(toCanvasX(0), 0);
-            ctx.lineTo(toCanvasX(0), height);
-            ctx.moveTo(0, toCanvasY(0));
-            ctx.lineTo(width, toCanvasY(0));
-            ctx.stroke();
-
-            // 2. Render Astronomical Target Core (M31 Soft Elliptical Nebula)
-            const cx = toCanvasX(0);
-            const cy = toCanvasY(0);
-            const rx = (0.5 / maxAz) * (width / 2);
-            const ry = (0.28 / maxAlt) * (height / 2);
-
-            const targetGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, rx);
-            targetGrad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-            targetGrad.addColorStop(0.3, 'rgba(147, 197, 253, 0.4)');
-            targetGrad.addColorStop(0.7, 'rgba(99, 102, 241, 0.15)');
-            targetGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.rotate(-15 * Math.PI / 180);
-            ctx.fillStyle = targetGrad;
-            ctx.beginPath();
-            ctx.ellipse(0, 0, rx, ry, 0, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.restore();
-
-            // 3. Render Inner Blue Telescope FOV Frame
-            const scope = TELESCOPE_PRESETS[state.telescopeKey];
-            const fovPxW = (scope.fovW / maxAz) * (width / 2);
-            const fovPxH = (scope.fovH / maxAlt) * (height / 2);
-
-            const fovX = cx - fovPxW / 2;
-            const fovY = cy - fovPxH / 2;
-
-            ctx.strokeStyle = '#00E5FF';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = 'rgba(0, 229, 255, 0.6)';
-            ctx.shadowBlur = 10;
-            ctx.strokeRect(fovX, fovY, fovPxW, fovPxH);
-            ctx.shadowBlur = 0; // Reset shadow
-
-            // 4. Render Satellite Vector Trails (TRUNCATED CLEANLY AT GRID EDGE)
-            const activeSats = getActiveSatellites();
-
-            // Clip drawing context strictly to inside outer sky grid bounds
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(0, 0, width, height);
-            ctx.clip();
-
-            activeSats.forEach(sat => {
-                // Check user legend visibility toggle
-                if (!state.trailToggles[sat.type]) return;
-
-                // Truncate line at grid perimeter (-3.55 to +3.55 Az, -2.0 to +2.0 Alt)
-                const clipped = clipLineToGrid(sat.path[0], sat.path[1], sat.path[2], sat.path[3], -maxAz, -maxAlt, maxAz, maxAlt);
-                if (!clipped) return;
-
-                const sx1 = toCanvasX(clipped.cx1);
-                const sy1 = toCanvasY(clipped.cy1);
-                const sx2 = toCanvasX(clipped.cx2);
-                const sy2 = toCanvasY(clipped.cy2);
-
-                let color = '#BF5AF2'; // Purple for Near-miss
-                if (sat.type === 'through') color = '#FF3B30'; // Red
-                if (sat.type === 'across') color = '#FF9500'; // Orange
-
-                ctx.strokeStyle = color;
-                ctx.lineWidth = (sat.id === state.selectedSatId) ? 3 : 2;
-                ctx.beginPath();
-                ctx.moveTo(sx1, sy1);
-                ctx.lineTo(sx2, sy2);
-                ctx.stroke();
-
-                // If selected in table, trace with dashed white overlay and arrow label
-                if (sat.id === state.selectedSatId) {
-                    ctx.strokeStyle = '#FFFFFF';
-                    ctx.lineWidth = 2.5;
-                    ctx.setLineDash([6, 4]);
-                    ctx.beginPath();
-                    ctx.moveTo(sx1, sy1);
-                    ctx.lineTo(sx2, sy2);
-                    ctx.stroke();
-                    ctx.setLineDash([]); // Reset dash
-
-                    // Selection highlight tag
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.font = 'bold 11px Inter, sans-serif';
-                    ctx.fillText(`► ${sat.name}`, sx2 + 6, sy2 + 4);
-                }
-            });
-
-            ctx.restore(); // Restore clip context
-        }
-
-        // ==========================================
-        // TIMELINE CANVAS & SLIDER ENGINE
-        // ==========================================
-
-        function drawTimelineDensityCanvas() {
-            const canvas = document.getElementById('timelineDensityCanvas');
-            if (!canvas) return;
-
-            const rect = canvas.parentElement.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-
-            const ctx = canvas.getContext('2d');
-            ctx.scale(dpr, dpr);
-
-            const width = rect.width;
-            const height = rect.height;
-
-            // Background fill
-            ctx.fillStyle = '#10141D';
-            ctx.fillRect(0, 0, width, height);
-
-            // Draw density background bar
-            const totalMin = 551;
-            const bucketCount = 100;
-            const bucketWidth = width / bucketCount;
-
-            for (let i = 0; i < bucketCount; i++) {
-                const bStartMin = (i / bucketCount) * totalMin;
-                const bEndMin = ((i + 1) / bucketCount) * totalMin;
-
-                // Count satellites active in this time slice
-                const count = SATELLITE_DATABASE.filter(s => s.min >= bStartMin && s.min < bEndMin).length;
-
-                let color = 'rgba(0, 229, 255, 0.15)';
-                if (count >= 3) color = 'rgba(255, 59, 48, 0.45)';
-                else if (count >= 1) color = 'rgba(255, 149, 0, 0.35)';
-
-                ctx.fillStyle = color;
-                ctx.fillRect(i * bucketWidth, 0, bucketWidth - 1, height);
-            }
-
-            // Highlight Longest Clean Window (10:56 PM to 11:57 PM -> min 139 to min 200)
-            const cleanStartPx = (139 / totalMin) * width;
-            const cleanEndPx = (200 / totalMin) * width;
-
-            ctx.fillStyle = 'rgba(48, 209, 88, 0.3)';
-            ctx.fillRect(cleanStartPx, 0, cleanEndPx - cleanStartPx, height);
-
-            ctx.strokeStyle = '#30D158';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(cleanStartPx, 0, cleanEndPx - cleanStartPx, height);
-        }
-
-        // Dual Slider Drag Event Handler
-        function onSliderInput() {
-            const minEl = document.getElementById('slider-min');
-            const maxEl = document.getElementById('slider-max');
-
-            let val1 = parseInt(minEl.value, 10);
-            let val2 = parseInt(maxEl.value, 10);
-
-            // Ensure thumbs do not cross
-            if (val1 >= val2) {
-                if (event.target.id === 'slider-min') {
-                    minEl.value = val2 - 5;
-                    val1 = val2 - 5;
-                } else {
-                    maxEl.value = val1 + 5;
-                    val2 = val1 + 5;
-                }
-            }
-
-            state.timeMin = val1;
-            state.timeMax = val2;
-
-            updateDashboard();
-        }
-
-        // Preset Time Window Setter
-        function setTimelinePreset(presetKey) {
-            const minEl = document.getElementById('slider-min');
-            const maxEl = document.getElementById('slider-max');
-
-            if (presetKey === 'full') {
-                state.timeMin = 0; state.timeMax = 551;
-            } else if (presetKey === 'dusk') {
-                state.timeMin = 0; state.timeMax = 120;
-            } else if (presetKey === 'midnight') {
-                state.timeMin = 139; state.timeMax = 320;
-            } else if (presetKey === 'dawn') {
-                state.timeMin = 430; state.timeMax = 551;
-            } else if (presetKey === 'clean') {
-                state.timeMin = 139; state.timeMax = 200;
-            }
-
-            minEl.value = state.timeMin;
-            maxEl.value = state.timeMax;
-
-            updateDashboard();
-        }
-
-        // ==========================================
-        // UI & REACTION SYNCHRONIZATION ENGINE
-        // ==========================================
-
-        function updateDashboard() {
-            const activeSats = getActiveSatellites();
-            const scope = TELESCOPE_PRESETS[state.telescopeKey];
-
-            // 1. Calculate Metrics
-            const sessionDurationMin = state.timeMax - state.timeMin;
-            const sessionDurationSec = sessionDurationMin * 60;
-            const totalFrames = Math.max(1, Math.floor(sessionDurationSec / state.subExpSec));
-
-            // Calculate corrupted frame indices
-            const corruptedFrameSet = new Set();
-            activeSats.forEach(sat => {
-                // Check if satellite enters FOV box or target
-                if (sat.type === 'through' || sat.type === 'across') {
-                    const satTimeInSessionSec = (sat.min - state.timeMin) * 60;
-                    const startFrame = Math.floor(satTimeInSessionSec / state.subExpSec);
-                    const endFrame = Math.floor((satTimeInSessionSec + sat.dur) / state.subExpSec);
-
-                    for (let f = startFrame; f <= endFrame; f++) {
-                        if (f >= 0 && f < totalFrames) {
-                            corruptedFrameSet.add(f);
-                        }
-                    }
-                }
-            });
-
-            const corruptedCount = corruptedFrameSet.size;
-            const cleanCount = totalFrames - corruptedCount;
-            const efficiencyPct = ((cleanCount / totalFrames) * 100).toFixed(1);
-
-            // 2. Update UI Metric Elements
-            document.getElementById('stat-efficiency').textContent = `${efficiencyPct}%`;
-            document.getElementById('stat-session-time').textContent = `${sessionDurationMin} min`;
-            document.getElementById('stat-sub-exposure').textContent = `${state.subExpSec}s`;
-            document.getElementById('stat-total-frames').textContent = totalFrames.toLocaleString();
-            document.getElementById('stat-corrupted-frames').textContent = corruptedCount.toLocaleString();
-
-            // 3. Update Sky View Text & Specs
-            const throughCount = activeSats.filter(s => s.type === 'through').length;
-            const acrossCount = activeSats.filter(s => s.type === 'across').length;
-            const missCount = activeSats.filter(s => s.type === 'miss').length;
-
-            document.getElementById('skyview-summary-text').innerHTML = `
-                <strong class="text-white">${activeSats.length} trails in view:</strong> 
-                <span class="text-red-400 font-semibold">${throughCount} through target</span>, 
-                <span class="text-amber-400 font-semibold">${acrossCount} across frame</span>, 
-                <span class="text-purple-400 font-semibold">${missCount} near-miss</span>. 
-                At ${state.subExpSec}s subs, <strong class="text-red-400">${corruptedCount} of ${totalFrames}</strong> frames corrupted.
-            `;
-
-            document.getElementById('fov-specs-footnote').textContent = 
-                `FOV ${scope.fovW.toFixed(2)}°×${scope.fovH.toFixed(2)}° inside 7.1°×4.0° sky view · ${scope.name}`;
-
-            // 4. Update Timeline Range Label
-            const startTimeStr = minutesToTimeString(state.timeMin);
-            const endTimeStr = minutesToTimeString(state.timeMax);
-            document.getElementById('timeline-range-label').textContent = 
-                `Selected Window: ${startTimeStr} – ${endTimeStr} (${sessionDurationMin} minutes / ${(sessionDurationMin/60).toFixed(1)}h)`;
-
-            // 5. Render Sky View Canvas & Table
-            renderSkyView();
-            renderSatelliteTable(activeSats);
-        }
-
-        // Helper: Convert night minute index to clock string
-        function minutesToTimeString(min) {
-            // Night starts at 08:37 PM (1237 min from midnight)
-            let totalMins = 20 * 60 + 37 + min;
-            let h = Math.floor(totalMins / 60) % 24;
-            let m = totalMins % 60;
-            let ampm = h >= 12 ? 'PM' : 'AM';
-            let displayH = h % 12;
-            if (displayH === 0) displayH = 12;
-            return `${displayH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
-        }
-
-        // ==========================================
-        // SATELLITE ACTIVE TABLE ENGINE
-        // ==========================================
-
-        function renderSatelliteTable(sats) {
-            const tbody = document.getElementById('satellite-table-body');
-            const badge = document.getElementById('active-count-badge');
-            if (!tbody) return;
-
-            // Apply category pill filter
-            let filtered = sats;
-            if (state.activeFilter !== 'all') {
-                filtered = sats.filter(s => s.type === state.activeFilter);
-            }
-
-            badge.textContent = `${filtered.length} Active`;
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="py-8 text-center text-slate-400">
-                            <i class="fa-solid fa-satellite-dish text-2xl mb-2 text-slate-400"></i>
-                            <div>No satellite trails detected in this timeline window.</div>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(sat => {
-                const isSelected = sat.id === state.selectedSatId;
-                let badgeClass = 'bg-purple-500/10 text-purple-400 border-purple-500/30';
-                let typeText = 'Near-Miss';
-
-                if (sat.type === 'through') {
-                    badgeClass = 'bg-red-500/10 text-red-400 border-red-500/30';
-                    typeText = 'Through Target';
-                } else if (sat.type === 'across') {
-                    badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
-                    typeText = 'Across Frame';
-                }
-
-                return `
-                    <tr onclick="selectSatelliteRow('${sat.id}')" class="hover:bg-navy-800/80 cursor-pointer transition-colors ${isSelected ? 'bg-cyan-500/10 font-medium' : ''}">
-                        <td class="py-3 px-4 font-semibold text-slate-100 flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full ${sat.type === 'through' ? 'bg-trail-red' : sat.type === 'across' ? 'bg-trail-orange' : 'bg-trail-purple'}"></span>
-                            <span>${sat.name}</span>
-                            <span class="text-[10px] text-slate-400 font-mono">(${sat.norad})</span>
-                        </td>
-                        <td class="py-3 px-4 font-mono text-cyan-300">${sat.timeStr}</td>
-                        <td class="py-3 px-4 font-mono text-slate-300">${sat.dur}s</td>
-                        <td class="py-3 px-4">
-                            <span class="px-2 py-0.5 rounded-full text-[10px] border font-medium ${badgeClass}">
-                                ${typeText}
-                            </span>
-                        </td>
-                        <td class="py-3 px-4 text-right font-mono text-slate-400">${sat.alt}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        // Table Row Click Handler to trace with white dashed line
-        function selectSatelliteRow(satId) {
-            if (state.selectedSatId === satId) {
-                state.selectedSatId = null; // Toggle off
-            } else {
-                state.selectedSatId = satId;
-            }
-            updateDashboard();
-        }
-
-        // Table Category Filter Buttons
-        function setTableFilter(filter) {
-            state.activeFilter = filter;
-            ['all', 'through', 'across', 'miss'].forEach(f => {
-                const btn = document.getElementById(`btn-filter-${f}`);
-                if (btn) {
-                    if (f === filter) {
-                        btn.className = 'px-2.5 py-1 rounded bg-slate-700 text-white font-medium';
-                    } else {
-                        btn.className = 'px-2.5 py-1 rounded bg-navy-850 text-slate-400 hover:text-slate-200';
-                    }
-                }
-            });
-            updateDashboard();
-        }
-
-        // Legend Visibility Toggles
-        function toggleTrailFilter(type) {
-            state.trailToggles[type] = !state.trailToggles[type];
-            const btn = document.getElementById(`toggle-${type}`);
-            if (btn) {
-                if (state.trailToggles[type]) {
-                    btn.classList.remove('opacity-40');
-                } else {
-                    btn.classList.add('opacity-40');
-                }
-            }
-            renderSkyView();
-        }
-
-        // ==========================================
-        // USER GUIDE MODAL CONTROLLER
-        // ==========================================
-
-        function openUserGuide(sectionAnchor = 'overview') {
-            const modal = document.getElementById('userGuideModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // Lock background scrolling
-                
-                if (sectionAnchor) {
-                    setTimeout(() => {
-                        scrollToGuideSection(`guide-${sectionAnchor}`);
-                    }, 50);
-                }
-            }
-        }
-
-        function closeUserGuide() {
-            const modal = document.getElementById('userGuideModal');
-            if (modal) {
-                modal.classList.add('hidden');
-                document.body.style.overflow = ''; // Unlock body scroll
-            }
-        }
-
-        function scrollToGuideSection(sectionId) {
-            const el = document.getElementById(sectionId);
-            const container = document.getElementById('userGuideScrollBody');
-            if (el && container) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-    </script>
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-sans font-medium text-white flex items-center gap-2">
+            <i class="fa-solid fa-satellite text-slate-400 text-xs"></i>
+            ${sat.name}
+          </td>
+          <td class="py-2.5 px-3 text-slate-400">${sat.norad}</td>
+          <td class="py-2.5 px-3 text-sky-300">${formatTime(sat.passStart)}</td>
+          <td class="py-2.5 px-3">${passBadge}</td>
+          <td class="py-2.5 px-3 text-slate-300">72°</td>
+          <td class="py-2.5 px-3 text-red-400">${sat.passType === 'near' ? '0 subs' : '1-2 subs'}</td>
+          <td class="py-2.5 px-3 text-right">
+            <button class="px-2 py-1 rounded bg-white/5 hover:bg-sky-500/20 text-sky-400 text-[10px] transition">
+              <i class="fa-solid fa-magnifying-glass-plus"></i> Inspect
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* Select and Show Satellite Info Detail Card */
+    function selectSatelliteDetail(sat) {
+      state.selectedSatId = sat.id;
+      
+      const card = document.getElementById('satelliteDetailCard');
+      card.classList.remove('hidden');
+
+      document.getElementById('detailSatName').textContent = sat.name;
+      document.getElementById('detailSatNorad').textContent = `NORAD ${sat.norad}`;
+      document.getElementById('detailSatOperator').textContent = `${sat.operator} • ${sat.purpose}`;
+      document.getElementById('detailSatPassStart').textContent = formatTime(sat.passStart);
+      document.getElementById('detailSatCrossing').textContent = formatTime(sat.passStart + (sat.passEnd - sat.passStart) / 2);
+      document.getElementById('detailSatMag').textContent = `${sat.mag} mag • ${sat.alt}`;
+      
+      const passTypeEl = document.getElementById('detailSatPassType');
+      if (sat.passType === 'target') {
+        passTypeEl.textContent = 'Through Target Direct Center';
+        passTypeEl.className = 'text-red-400 font-semibold';
+      } else if (sat.passType === 'across') {
+        passTypeEl.textContent = 'Crosses FOV Frame Boundary';
+        passTypeEl.className = 'text-amber-400 font-semibold';
+      } else {
+        passTypeEl.textContent = 'Near-miss Outside Boundary';
+        passTypeEl.className = 'text-purple-400 font-semibold';
+      }
+
+      // Re-render table and canvas highlight
+      const activeSatellites = state.satellites.filter(s => s.passStart < state.sessionStart + state.sessionDuration && s.passEnd > state.sessionStart);
+      renderSatelliteTable(activeSatellites);
+      drawFOVCanvas(activeSatellites);
+    }
+
+    function closeSatelliteDetail() {
+      state.selectedSatId = null;
+      document.getElementById('satelliteDetailCard').classList.add('hidden');
+      const activeSatellites = state.satellites.filter(s => s.passStart < state.sessionStart + state.sessionDuration && s.passEnd > state.sessionStart);
+      renderSatelliteTable(activeSatellites);
+      drawFOVCanvas(activeSatellites);
+    }
+
+    /* User Guide Modal Handlers */
+    function openGuideModal(anchorId) {
+      const modal = document.getElementById('guideModal');
+      modal.classList.remove('hidden');
+      if (anchorId) {
+        const el = document.getElementById(anchorId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function closeGuideModal() {
+      document.getElementById('guideModal').classList.add('hidden');
+    }
+
+    /* Enable Draggable Timeline Window */
+    function initTimelineDrag() {
+      const track = document.getElementById('timelineTrack');
+      const overlay = document.getElementById('sessionWindowOverlay');
+      let isDragging = false;
+      let startX = 0;
+      let initialSessionStart = 0;
+
+      const handleStart = (clientX) => {
+        isDragging = true;
+        startX = clientX;
+        initialSessionStart = state.sessionStart;
+      };
+
+      const handleMove = (clientX) => {
+        if (!isDragging) return;
+        const rect = track.getBoundingClientRect();
+        const deltaX = clientX - startX;
+        const deltaMinutes = (deltaX / rect.width) * 540;
+        
+        let newStart = initialSessionStart + deltaMinutes;
+        newStart = Math.max(0, Math.min(newStart, 540 - state.sessionDuration));
+        
+        state.sessionStart = Math.round(newStart);
+        document.getElementById('sessionStartRange').value = state.sessionStart;
+        recalculateSession();
+      };
+
+      const handleEnd = () => {
+        isDragging = false;
+      };
+
+      overlay.addEventListener('mousedown', (e) => handleStart(e.clientX));
+      window.addEventListener('mousemove', (e) => handleMove(e.clientX));
+      window.addEventListener('mouseup', handleEnd);
+
+      overlay.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientX));
+      window.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientX));
+      window.addEventListener('touchend', handleEnd);
+
+      // Track click snapping
+      track.addEventListener('click', (e) => {
+        if (e.target === overlay || overlay.contains(e.target)) return;
+        const rect = track.getBoundingClientRect();
+        const clickRatio = (e.clientX - rect.left) / rect.width;
+        let newStart = clickRatio * 540 - state.sessionDuration / 2;
+        newStart = Math.max(0, Math.min(newStart, 540 - state.sessionDuration));
+        state.sessionStart = Math.round(newStart);
+        document.getElementById('sessionStartRange').value = state.sessionStart;
+        recalculateSession();
+      });
+    }
+
+    /* Application Initialization on Window Load */
+    window.onload = function() {
+      generateSatelliteDatabase();
+      initTimelineDrag();
+      recalculateSession();
+
+      // Handle Canvas Window Resize
+      window.addEventListener('resize', () => {
+        const activeSatellites = state.satellites.filter(s => s.passStart < state.sessionStart + state.sessionDuration && s.passEnd > state.sessionStart);
+        drawFOVCanvas(activeSatellites);
+      });
+    };
+  </script>
 </body>
 </html>
