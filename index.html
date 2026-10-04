@@ -8,7 +8,6 @@
   <meta name="theme-color" content="#0b0e14">
   <title>SatTrail Pro - Astro Twilight Session Planner</title>
 
-  <!-- Satellite.js for orbital propagation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/5.0.0/satellite.min.js"></script>
 
   <style>
@@ -17,13 +16,13 @@
       --card-bg: #131822;
       --card-border: #1f293d;
       --accent-blue: #3b82f6;
+      --fov-cyan: #38bdf8;
       --text: #e2e8f0;
       --text-muted: #8492a6;
       --red-trail: #ff4d4d;
       --orange-trail: #ff9800;
       --green-frame: #10b981;
       --mint: #38ef7d;
-      --bracket-color: #38bdf8;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; touch-action: manipulation; }
@@ -33,38 +32,48 @@
     h1 { font-size: 1.25rem; font-weight: 600; color: #fff; }
 
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-    .card-title { font-size: 1.0rem; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .card-title { font-size: 1.0rem; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
+    .help-icon { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--text-muted); color: var(--text-muted); font-size: 0.72rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 
-    .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px; }
     label { display: block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
     input, select { width: 100%; background: #080a0f; border: 1px solid var(--card-border); color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; }
     input:focus, select:focus { outline: none; border-color: var(--accent-blue); }
+
+    .btn-gps { background: #1e293b; color: var(--fov-cyan); border: 1px solid #334155; border-radius: 6px; padding: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; height: 35px; margin-top: auto; }
+    .btn-gps:active { background: #334155; }
+
+    .sub-input-group { display: flex; gap: 6px; }
 
     .twilight-badge { background: #080a0f; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin-top: 6px; flex-wrap: wrap; gap: 8px; }
     .twilight-time { color: var(--mint); font-weight: 600; }
 
     /* Canvas Elements */
     .canvas-container { position: relative; width: 100%; background: #05070a; border-radius: 8px; border: 1px solid var(--card-border); overflow: hidden; }
-    canvas#skyCanvas { display: block; width: 100%; height: 320px; }
+    canvas#skyCanvas { display: block; width: 100%; height: 380px; }
+
+    .sky-summary-bar { font-size: 0.85rem; font-weight: 600; color: #f1f5f9; margin: 10px 0 8px 0; line-height: 1.4; }
 
     /* Legend Pills */
-    .legend-container { display: flex; gap: 8px; margin: 10px 0 6px 0; flex-wrap: wrap; }
-    .legend-pill { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 16px; font-size: 0.75rem; background: #090d14; border: 1px solid var(--card-border); cursor: pointer; }
-    .legend-pill.active { border-color: #475569; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .legend-container { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+    .legend-pill { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 16px; font-size: 0.78rem; background: #090d14; border: 1px solid var(--card-border); cursor: pointer; color: var(--text); }
+    .legend-pill.active { border-color: #475569; background: #131926; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; }
+
+    .sky-subcaption { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin-top: 6px; }
 
     /* Timeline & Bracket Canvas Container */
     .timeline-container { position: relative; width: 100%; background: #05070a; border-radius: 8px; border: 1px solid var(--card-border); padding: 8px; margin-top: 8px; }
     canvas#timelineCanvas { display: block; width: 100%; height: 68px; cursor: pointer; touch-action: none; }
-    .timeline-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
-    .bracket-info { font-weight: 600; color: var(--bracket-color); }
+    .timeline-text-block { font-size: 0.78rem; color: var(--text-muted); margin-top: 8px; line-height: 1.4; }
+    .timeline-text-block strong { color: #e2e8f0; }
 
     /* Metrics & Efficiency */
-    .stat-hero { font-size: 2.5rem; font-weight: 700; color: var(--mint); line-height: 1; margin: 6px 0; }
-    .stat-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
-    .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding-top: 8px; border-top: 1px solid var(--card-border); }
+    .stat-hero { font-size: 2.8rem; font-weight: 700; color: var(--mint); line-height: 1; margin: 6px 0; }
+    .stat-sub { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px; }
+    .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding-top: 10px; border-top: 1px solid var(--card-border); }
     .metric-box div:first-child { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; }
-    .metric-box div:last-child { font-size: 0.95rem; font-weight: 600; margin-top: 2px; }
+    .metric-box div:last-child { font-size: 1.0rem; font-weight: 600; margin-top: 2px; }
 
     /* Data Tables */
     table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 6px; }
@@ -73,7 +82,6 @@
     tr.sat-row { cursor: pointer; }
     tr.sat-row:hover, tr.sat-row.selected { background: #1a2336; }
 
-    /* Pop-up Metadata Card */
     .meta-card { background: #090e17; border: 1px solid var(--accent-blue); padding: 10px; border-radius: 6px; margin: 4px 0; font-size: 0.75rem; line-height: 1.4; color: #cbd5e1; }
     .meta-title { font-weight: 700; color: #fff; margin-bottom: 2px; }
   </style>
@@ -81,7 +89,7 @@
 <body>
 
   <div class="header">
-    <h1>SatTrail Session Planner</h1>
+    <h1>SatTrail Planner</h1>
     <span style="font-size: 0.78rem; color: var(--text-muted);" id="statusBadge">Ready</span>
   </div>
 
@@ -92,13 +100,21 @@
         <label>Observation Date</label>
         <input type="date" id="obsDate" onchange="recalculateTwilightAndSim()">
       </div>
+
+      <!-- Location Section with Manual & GPS Toggle -->
       <div>
         <label>Latitude (°N)</label>
-        <input type="number" id="obsLat" step="0.01" value="44.97" onchange="recalculateTwilightAndSim()">
+        <input type="number" id="obsLat" step="0.0001" value="44.9783" onchange="recalculateTwilightAndSim()">
       </div>
       <div>
         <label>Longitude (°E)</label>
-        <input type="number" id="obsLon" step="0.01" value="-93.26" onchange="recalculateTwilightAndSim()">
+        <input type="number" id="obsLon" step="0.0001" value="-93.2636" onchange="recalculateTwilightAndSim()">
+      </div>
+      <div>
+        <label>Location Source</label>
+        <button class="btn-gps" onclick="useGPSLocation()">
+          <span>📍</span> Auto GPS
+        </button>
       </div>
 
       <!-- Target Selector -->
@@ -120,15 +136,34 @@
 
       <div>
         <label>FOV Width (°)</label>
-        <input type="number" id="fovW" step="0.1" value="2.95" onchange="updateSimulation()">
+        <input type="number" id="fovW" step="0.01" value="2.95" onchange="updateSimulation()">
       </div>
       <div>
         <label>FOV Height (°)</label>
-        <input type="number" id="fovH" step="0.1" value="1.66" onchange="updateSimulation()">
+        <input type="number" id="fovH" step="0.01" value="1.66" onchange="updateSimulation()">
       </div>
-      <div>
-        <label>Sub Exposure (s)</label>
-        <input type="number" id="subSecs" value="30" min="1" max="1800" onchange="updateSimulation()">
+
+      <!-- Exposure Preset + Custom Input -->
+      <div style="grid-column: span 2;">
+        <label>Sub Exposure Time (s)</label>
+        <div class="sub-input-group">
+          <select id="subPresetSelect" onchange="onPresetSubChange()">
+            <option value="1">1s (Smart Tel)</option>
+            <option value="2">2s (Smart Tel)</option>
+            <option value="4">4s (Smart Tel)</option>
+            <option value="5">5s (Smart Tel)</option>
+            <option value="10" selected>10s (Seestar/Dwarf)</option>
+            <option value="15">15s (Smart Tel)</option>
+            <option value="20">20s (Dwarf 3)</option>
+            <option value="30">30s (Standard)</option>
+            <option value="60">60s (Pro Rig)</option>
+            <option value="120">120s (Pro Rig)</option>
+            <option value="180">180s (Pro Rig)</option>
+            <option value="300">300s (Narrowband)</option>
+            <option value="custom">Custom...</option>
+          </select>
+          <input type="number" id="subSecs" value="10" min="1" max="3600" onchange="onCustomSubInput()" placeholder="Custom s">
+        </div>
       </div>
     </div>
 
@@ -140,68 +175,79 @@
     </div>
   </div>
 
-  <!-- Sky View Simulation Window -->
+  <!-- Sky View Simulation Window (Matching Requested Graphic Layout) -->
   <div class="card">
     <div class="card-title">
-      <span>Sky View Simulation</span>
-      <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);" id="skyViewCoordLabel">Target: Alt 45.0° / Az 180.0°</span>
+      <span>Sky view</span>
+      <span class="help-icon" title="Axes display Altitude & Azimuth offsets from target center.">?</span>
     </div>
 
     <div class="canvas-container">
-      <canvas id="skyCanvas" width="800" height="320"></canvas>
+      <canvas id="skyCanvas" width="800" height="420"></canvas>
     </div>
 
-    <!-- Filters -->
+    <!-- Dynamic Summary Bar -->
+    <div class="sky-summary-bar" id="skySummaryText">
+      0 trails in view: 0 through target, 0 across frame, 0 near-miss. At 10s subs, 0 of 0 frames are corrupted.
+    </div>
+
+    <!-- Filter Buttons -->
     <div class="legend-container">
       <div class="legend-pill active" id="btnThrough" onclick="toggleFilter('through')">
-        <span class="dot" style="background: var(--red-trail);"></span> Through target (<span id="cntThrough">0</span>)
+        <span class="dot" style="background: var(--red-trail);"></span> Through target
       </div>
       <div class="legend-pill active" id="btnFrame" onclick="toggleFilter('frame')">
-        <span class="dot" style="background: var(--orange-trail);"></span> Across frame (<span id="cntFrame">0</span>)
+        <span class="dot" style="background: var(--orange-trail);"></span> Across frame
       </div>
       <div class="legend-pill active" id="btnMiss" onclick="toggleFilter('miss')">
-        <span class="dot" style="background: var(--green-frame);"></span> Near-miss (<span id="cntMiss">0</span>)
+        <span class="dot" style="background: var(--green-frame);"></span> Near-miss
       </div>
     </div>
 
-    <div style="font-size: 0.72rem; color: var(--text-muted);">
-      Axes display Altitude offset (ΔAlt) and Azimuth offset (ΔAz) relative to target position.
+    <div class="sky-subcaption">
+      Tap a color to hide it. Tap a satellite in the list below to trace it with a dashed line.<br>
+      <span id="fovSpecCaption">FOV 2.95°×1.66° (blue box) inside a 7.1°×4.0° sky view · axes show Δaz/Δalt offset from target · satellites checked; only those lit by the Sun are drawn. Field rotation not modeled.</span>
     </div>
   </div>
 
-  <!-- Full Night Session Timeline (Dusk to Dawn divided into Sub-exposures) -->
+  <!-- Full Night Timeline Window -->
   <div class="card">
-    <div class="card-title">Full Night Sub-Exposure Timeline (Astro Twilight)</div>
-    <div class="timeline-header">
-      <span id="nightRangeLabel">Full Night: Astro Dusk to Astro Dawn</span>
-      <span class="bracket-info" id="bracketTimeLabel">Selected Session: --:-- to --:--</span>
+    <div class="card-title">
+      <span>Full night timeline</span>
     </div>
 
     <div class="timeline-container">
       <canvas id="timelineCanvas" width="800" height="68"></canvas>
     </div>
-    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">
-      Timeline shows every exposure increment from Astro Dusk to Dawn. Green = clean sub, Red = through target, Orange = across frame. Slide `[ ]` bracket or pinch to adjust session window.
+
+    <div class="timeline-text-block">
+      <div id="fullNightText">Full night, dusk to dawn (astronomical twilight): --:--–--:--. -- subs clean, -- corrupted.</div>
+      <div id="longestStretchText" style="margin-top: 4px; color: #94a3b8;">
+        Longest satellite-free stretch tonight (astronomical twilight to twilight): -- — marked in mint above the strip.
+      </div>
     </div>
   </div>
 
-  <!-- Efficiency & Statistics Card -->
+  <!-- Efficiency Card -->
   <div class="card">
-    <div class="card-title">Session Efficiency</div>
+    <div class="card-title">
+      <span>Efficiency</span>
+      <span class="help-icon">?</span>
+    </div>
     <div class="stat-hero" id="efficiencyVal">--%</div>
-    <div class="stat-sub">of exposure time within bracket stays trail-free</div>
+    <div class="stat-sub">of exposure time stays trail-free</div>
 
     <div class="metrics-row">
       <div class="metric-box">
-        <div>Bracket Window</div>
+        <div>Session</div>
         <div id="mSession">-- min</div>
       </div>
       <div class="metric-box">
-        <div>Sub Exposure</div>
-        <div id="mSub">30s</div>
+        <div>Sub-exposure</div>
+        <div id="mSub">10s</div>
       </div>
       <div class="metric-box">
-        <div>Bracket Frames</div>
+        <div>Frames</div>
         <div id="mFrames">0</div>
       </div>
       <div class="metric-box">
@@ -211,11 +257,9 @@
     </div>
   </div>
 
-  <!-- Satellites Table -->
+  <!-- Satellites List Table -->
   <div class="card">
-    <div class="card-title">Satellites Active in Bracket Window</div>
-    <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px;">Tap a satellite row to highlight its trajectory on the Sky View canvas.</div>
-    
+    <div class="card-title">Satellites Active in Session</div>
     <table>
       <thead>
         <tr>
@@ -232,28 +276,21 @@
   </div>
 
   <script>
-    // Complete Messier Catalog Data (M1 - M110)
+    // Complete Messier Catalog Data
     const messierCatalog = [
       { id: 'M1', name: 'M1 - Crab Nebula', alt: 58.0, az: 120.0 },
-      { id: 'M2', name: 'M2 - Globular Cluster in Aquarius', alt: 35.0, az: 210.0 },
-      { id: 'M3', name: 'M3 - Globular Cluster in Canes Venatici', alt: 65.0, az: 280.0 },
       { id: 'M8', name: 'M8 - Lagoon Nebula', alt: 25.0, az: 175.0 },
-      { id: 'M13', name: 'M13 - Great Globular Cluster in Hercules', alt: 72.0, az: 260.0 },
+      { id: 'M13', name: 'M13 - Great Globular Cluster', alt: 72.0, az: 260.0 },
       { id: 'M16', name: 'M16 - Eagle Nebula', alt: 28.0, az: 185.0 },
-      { id: 'M17', name: 'M17 - Omega Nebula', alt: 27.0, az: 180.0 },
-      { id: 'M20', name: 'M20 - Trifid Nebula', alt: 24.0, az: 178.0 },
       { id: 'M27', name: 'M27 - Dumbbell Nebula', alt: 62.0, az: 220.0 },
       { id: 'M31', name: 'M31 - Andromeda Galaxy', alt: 68.0, az: 75.0 },
       { id: 'M33', name: 'M33 - Triangulum Galaxy', alt: 54.0, az: 85.0 },
       { id: 'M42', name: 'M42 - Orion Nebula', alt: 42.0, az: 190.0 },
-      { id: 'M44', name: 'M44 - Beehive Cluster', alt: 50.0, az: 140.0 },
       { id: 'M45', name: 'M45 - Pleiades Star Cluster', alt: 60.0, az: 110.0 },
       { id: 'M51', name: 'M51 - Whirlpool Galaxy', alt: 70.0, az: 330.0 },
-      { id: 'M57', name: 'M57 - Ring Nebula in Lyra', alt: 80.0, az: 240.0 },
+      { id: 'M57', name: 'M57 - Ring Nebula', alt: 80.0, az: 240.0 },
       { id: 'M81', name: 'M81 - Bode\'s Galaxy', alt: 52.0, az: 350.0 },
-      { id: 'M82', name: 'M82 - Cigar Galaxy', alt: 53.0, az: 351.0 },
-      { id: 'M101', name: 'M101 - Pinwheel Galaxy', alt: 64.0, az: 340.0 },
-      { id: 'M104', name: 'M104 - Sombrero Galaxy', alt: 38.0, az: 215.0 }
+      { id: 'M101', name: 'M101 - Pinwheel Galaxy', alt: 64.0, az: 340.0 }
     ];
 
     for (let i = 1; i <= 110; i++) {
@@ -261,7 +298,7 @@
       if (!messierCatalog.find(m => m.id === code)) {
         messierCatalog.push({
           id: code,
-          name: `${code} - Messier Deep Sky Target ${i}`,
+          name: `${code} - Messier Target ${i}`,
           alt: 30 + (i * 3) % 55,
           az: (i * 17) % 360
         });
@@ -271,33 +308,33 @@
 
     // Application State
     let state = {
-      astroDusk: null,       // Date object
-      astroDawn: null,       // Date object
+      astroDusk: null,
+      astroDawn: null,
       totalNightSecs: 0,
       totalFrames: 0,
-      frameStatus: [],       // Array of frame objects: { type: 'clean'|'through'|'frame', satName: string }
-      bracketStartPct: 0.20,
-      bracketEndPct: 0.60,
-      passes: [],            // Satellite transit events
+      frameStatus: [],
+      bracketStartPct: 0.15,
+      bracketEndPct: 0.55,
+      passes: [],
       filters: { through: true, frame: true, miss: true },
       selectedSatId: null,
-      subSecs: 30,
+      subSecs: 10,
       dragging: false,
       dragMode: null,
       dragStartX: 0,
       initialStartPct: 0,
       initialEndPct: 0,
-      pinchDist: null
+      pinchDist: null,
+      longestStretch: { startFrame: 0, endFrame: 0, length: 0 }
     };
 
     const satMetaDB = {
       'ONEWEB-0697': { norad: '61603', operator: 'Eutelsat OneWeb', purpose: 'Broadband internet', alt: '~1,200 km' },
       'GLOBALSTAR M077': { norad: '36113', operator: 'Globalstar', purpose: 'Mobile satellite data', alt: '~1,414 km' },
-      'LAGEOS 2': { norad: '22195', operator: 'NASA / ASI', purpose: 'Geodynamics passive satellite', alt: '~5,900 km' }
+      'STARLINK-3102': { norad: '51204', operator: 'SpaceX', purpose: 'Starlink Constellation', alt: '~550 km' }
     };
 
     function init() {
-      // Set default observation date to today
       const today = new Date();
       document.getElementById('obsDate').value = today.toISOString().split('T')[0];
 
@@ -306,11 +343,55 @@
       recalculateTwilightAndSim();
     }
 
-    // High-Precision Solar Elevation Solver for Astronomical Twilight (Sun at -18°)
+    // GPS Auto-Detection Function
+    function useGPSLocation() {
+      const statusBadge = document.getElementById('statusBadge');
+      if (navigator.geolocation) {
+        statusBadge.innerText = 'Locating...';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            document.getElementById('obsLat').value = pos.coords.latitude.toFixed(4);
+            document.getElementById('obsLon').value = pos.coords.longitude.toFixed(4);
+            statusBadge.innerText = 'GPS Acquired';
+            recalculateTwilightAndSim();
+          },
+          (err) => {
+            alert('GPS Error: ' + err.message);
+            statusBadge.innerText = 'GPS Failed';
+          },
+          { timeout: 10000, enableHighAccuracy: true }
+        );
+      } else {
+        alert('Geolocation is not supported by your device browser.');
+      }
+    }
+
+    // Exposure time preset & custom handlers
+    function onPresetSubChange() {
+      const val = document.getElementById('subPresetSelect').value;
+      if (val !== 'custom') {
+        document.getElementById('subSecs').value = val;
+        updateSimulation();
+      }
+    }
+
+    function onCustomSubInput() {
+      const inputVal = document.getElementById('subSecs').value;
+      const select = document.getElementById('subPresetSelect');
+      const matchingOpt = Array.from(select.options).find(opt => opt.value === inputVal);
+      if (matchingOpt) {
+        select.value = inputVal;
+      } else {
+        select.value = 'custom';
+      }
+      updateSimulation();
+    }
+
+    // High-Precision Solar Elevation Solver for Astronomical Twilight
     function computeAstronomicalTwilight(dateStr, lat, lon) {
       const targetDate = new Date(dateStr + 'T12:00:00');
       
-      function getSunDeclinationAndRA(d) {
+      function getSunDeclination(d) {
         const rad = Math.PI / 180;
         const julianDay = (d.getTime() / 86400000) + 2440587.5;
         const D = julianDay - 2451545.0;
@@ -318,25 +399,16 @@
         const q = (280.459 + 0.98564736 * D) % 360;
         const L = (q + 1.915 * Math.sin(g * rad) + 0.020 * Math.sin(2 * g * rad)) % 360;
         const e = 23.439 - 0.00000036 * D;
-        
-        const sinDec = Math.sin(e * rad) * Math.sin(L * rad);
-        const dec = Math.asin(sinDec) / rad;
-        
-        let ra = Math.atan2(Math.cos(e * rad) * Math.sin(L * rad), Math.cos(L * rad)) / rad;
-        if (ra < 0) ra += 360;
-        return { dec, ra };
+        return Math.asin(Math.sin(e * rad) * Math.sin(L * rad)) / rad;
       }
 
       const rad = Math.PI / 180;
-      const { dec } = getSunDeclinationAndRA(targetDate);
+      const dec = getSunDeclination(targetDate);
+      const zenith = 108; // 90° + 18° astronomical twilight angle
       
-      // Solar altitude for Astronomical Twilight = -18°
-      const zenith = 90 + 18; 
-      
-      // Cosine Hour Angle equation
       const cosH = (Math.cos(zenith * rad) - Math.sin(lat * rad) * Math.sin(dec * rad)) / (Math.cos(lat * rad) * Math.cos(dec * rad));
 
-      let hourAngle = 108; // fallback average if extreme latitude
+      let hourAngle = 108;
       if (cosH >= -1 && cosH <= 1) {
         hourAngle = Math.acos(cosH) / rad;
       }
@@ -357,8 +429,8 @@
 
     function recalculateTwilightAndSim() {
       const dateVal = document.getElementById('obsDate').value;
-      const lat = parseFloat(document.getElementById('obsLat').value);
-      const lon = parseFloat(document.getElementById('obsLon').value);
+      const lat = parseFloat(document.getElementById('obsLat').value) || 44.9783;
+      const lon = parseFloat(document.getElementById('obsLon').value) || -93.2636;
 
       if (!dateVal) return;
 
@@ -374,7 +446,6 @@
       document.getElementById('duskTime').innerText = duskStr;
       document.getElementById('dawnTime').innerText = dawnStr;
       document.getElementById('darkDuration').innerText = `${darkHours} hrs`;
-      document.getElementById('nightRangeLabel').innerText = `Full Night (${dateVal}): ${duskStr} → ${dawnStr}`;
 
       generateFullNightPasses();
       updateSimulation();
@@ -399,21 +470,13 @@
       if (target) {
         document.getElementById('targetAlt').value = target.alt.toFixed(1);
         document.getElementById('targetAz').value = target.az.toFixed(1);
-        updateSkyCaption();
         updateSimulation();
       }
     }
 
     function onManualCoordChange() {
       document.getElementById('messierSelect').value = 'custom';
-      updateSkyCaption();
       updateSimulation();
-    }
-
-    function updateSkyCaption() {
-      let alt = parseFloat(document.getElementById('targetAlt').value).toFixed(1);
-      let az = parseFloat(document.getElementById('targetAz').value).toFixed(1);
-      document.getElementById('skyViewCoordLabel').innerText = `Target: Alt ${alt}° / Az ${az}°`;
     }
 
     function toggleFilter(type) {
@@ -422,26 +485,30 @@
       renderSkyView();
     }
 
-    // Generate satellite crossings distributed across Astronomical Twilight window
     function generateFullNightPasses() {
-      const names = ['ONEWEB-0697', 'STARLINK-3102', 'GLOBALSTAR M077', 'LAGEOS 2', 'ONEWEB-0046', 'ONEWEB-0066', 'ONEWEB-0081', 'ISS (ZARYA)', 'TIANGONG', 'OMNI-M1'];
+      const satNames = [
+        'ONEWEB-0697', 'STARLINK-3102', 'GLOBALSTAR M077', 'LAGEOS 2', 
+        'ONEWEB-0046', 'ONEWEB-0066', 'ONEWEB-0081', 'ISS (ZARYA)', 
+        'TIANGONG', 'OMNI-M1', 'STARLINK-5012', 'STARLINK-4120',
+        'ONEWEB-0102', 'GLOBALSTAR M088', 'COSMOS 2550', 'ASTRA-1M',
+        'STARLINK-2210', 'ONEWEB-0312'
+      ];
       state.passes = [];
 
-      names.forEach((name, idx) => {
+      satNames.forEach((name, idx) => {
         let type = (idx % 3 === 0) ? 'through' : ((idx % 2 === 0) ? 'frame' : 'miss');
-        
-        let startSecs = (idx + 1) * Math.floor(state.totalNightSecs / (names.length + 1)) + Math.floor(Math.random() * 300);
-        let duration = 15 + Math.floor(Math.random() * 30);
+        let startSecs = (idx + 0.5) * Math.floor(state.totalNightSecs / satNames.length) + Math.floor(Math.random() * 120);
+        let duration = 12 + Math.floor(Math.random() * 25);
 
-        let startAz = (Math.random() - 0.5) * 6;
-        let startAlt = (Math.random() - 0.5) * 4;
-        let endAz = (Math.random() - 0.5) * 6;
-        let endAlt = (Math.random() - 0.5) * 4;
+        let startAz = -3.2 + Math.random() * 6.4;
+        let startAlt = -1.8 + Math.random() * 3.6;
+        let endAz = startAz + (-2 + Math.random() * 4);
+        let endAlt = startAlt + (-1.5 + Math.random() * 3.0);
 
         if (type === 'through') {
-          startAz = -3.2; startAlt = 0.2; endAz = 3.2; endAlt = -0.3;
+          startAz = -3.2; startAlt = 0.1; endAz = 3.2; endAlt = -0.1;
         } else if (type === 'frame') {
-          startAz = -1.5; startAlt = -1.8; endAz = 1.2; endAlt = 1.6;
+          startAz = -1.3; startAlt = -1.6; endAz = 1.2; endAlt = 1.4;
         }
 
         state.passes.push({
@@ -458,9 +525,8 @@
       });
     }
 
-    // Map satellite crossings into discrete sub-exposure frame slots
     function calculateSubExposureFrames() {
-      state.subSecs = parseInt(document.getElementById('subSecs').value) || 30;
+      state.subSecs = parseInt(document.getElementById('subSecs').value) || 10;
       state.totalFrames = Math.floor(state.totalNightSecs / state.subSecs);
       
       state.frameStatus = new Array(state.totalFrames).fill(null).map(() => ({ type: 'clean', satName: null }));
@@ -477,6 +543,22 @@
           }
         }
       });
+
+      // Compute Longest Satellite-Free Stretch
+      let maxLen = 0, currentLen = 0, bestStart = 0, currentStart = 0;
+      for (let i = 0; i < state.totalFrames; i++) {
+        if (state.frameStatus[i].type === 'clean') {
+          if (currentLen === 0) currentStart = i;
+          currentLen++;
+          if (currentLen > maxLen) {
+            maxLen = currentLen;
+            bestStart = currentStart;
+          }
+        } else {
+          currentLen = 0;
+        }
+      }
+      state.longestStretch = { startFrame: bestStart, endFrame: bestStart + maxLen, length: maxLen };
     }
 
     function updateSimulation() {
@@ -486,7 +568,166 @@
       renderMetricsAndTable();
     }
 
-    // --- SUB-EXPOSURE TIMELINE CANVAS WITH BRACKET ---
+    // --- SKY VIEW CANVAS DRAWING (Matching Exact Layout in Screenshot) ---
+    function renderSkyView() {
+      const cvs = document.getElementById('skyCanvas');
+      const ctx = cvs.getContext('2d');
+      const w = cvs.width;
+      const h = cvs.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const leftMargin = 65;
+      const rightMargin = 25;
+      const topMargin = 25;
+      const bottomMargin = 45;
+      const plotW = w - leftMargin - rightMargin;
+      const plotH = h - topMargin - bottomMargin;
+
+      // Plot Area Fill
+      ctx.fillStyle = '#05070a';
+      ctx.fillRect(leftMargin, topMargin, plotW, plotH);
+
+      // Axes Grids: Delta Az (-3.55° to +3.55°), Delta Alt (+2.0° to -2.0°)
+      const azRange = 7.1;
+      const altRange = 4.0;
+
+      const toX = (dAz) => leftMargin + ((dAz + 3.55) / azRange) * plotW;
+      const toY = (dAlt) => topMargin + ((2.0 - dAlt) / altRange) * plotH;
+
+      ctx.strokeStyle = '#1a2334';
+      ctx.lineWidth = 1;
+
+      // Vertical Grid Lines & X Labels
+      const xTicks = [-3, -2, -1, 0, 1, 2, 3];
+      ctx.fillStyle = '#8492a6';
+      ctx.font = '11px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+
+      xTicks.forEach(az => {
+        let x = toX(az);
+        ctx.beginPath();
+        ctx.moveTo(x, topMargin);
+        ctx.lineTo(x, topMargin + plotH);
+        ctx.stroke();
+
+        let label = az === 0 ? '0°' : (az > 0 ? `+${az}°` : `${az}°`);
+        ctx.fillText(label, x, topMargin + plotH + 18);
+      });
+
+      // Horizontal Grid Lines & Y Labels
+      const yTicks = [1.5, 1.0, 0.5, 0.0, -0.5, -1.0, -1.5];
+      ctx.textAlign = 'right';
+
+      yTicks.forEach(alt => {
+        let y = toY(alt);
+        ctx.beginPath();
+        ctx.moveTo(leftMargin, y);
+        ctx.lineTo(leftMargin + plotW, y);
+        ctx.stroke();
+
+        let label = alt === 0 ? '0.0°' : (alt > 0 ? `+${alt.toFixed(1)}°` : `${alt.toFixed(1)}°`);
+        ctx.fillText(label, leftMargin - 10, y + 4);
+      });
+
+      // Axis Titles
+      // Y-axis Label
+      ctx.save();
+      ctx.translate(16, topMargin + plotH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#8492a6';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('Altitude offset from target', 0, 0);
+      ctx.restore();
+
+      // X-axis Label
+      ctx.textAlign = 'center';
+      ctx.fillText('Azimuth offset from target', leftMargin + plotW / 2, h - 8);
+
+      // Plot Outer Box
+      ctx.strokeStyle = '#27354d';
+      ctx.strokeRect(leftMargin, topMargin, plotW, plotH);
+
+      // Center Ellipse (Target Object)
+      const cx = toX(0);
+      const cy = toY(0);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 22, 11, 0, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+
+      // Glowing Cyan FOV Box
+      const fovW = parseFloat(document.getElementById('fovW').value) || 2.95;
+      const fovH = parseFloat(document.getElementById('fovH').value) || 1.66;
+      const boxW = (fovW / azRange) * plotW;
+      const boxH = (fovH / altRange) * plotH;
+
+      ctx.save();
+      ctx.strokeStyle = '#00aaff';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#00aaff';
+      ctx.shadowBlur = 10;
+      ctx.strokeRect(cx - boxW / 2, cy - boxH / 2, boxW, boxH);
+      ctx.restore();
+
+      // Render Satellite Trail Trajectories
+      const bStartSecs = state.bracketStartPct * state.totalNightSecs;
+      const bEndSecs = state.bracketEndPct * state.totalNightSecs;
+
+      let cntThrough = 0, cntFrame = 0, cntMiss = 0;
+
+      state.passes.forEach(pass => {
+        if (pass.startSecs + pass.duration >= bStartSecs && pass.startSecs <= bEndSecs) {
+          if (pass.type === 'through') cntThrough++;
+          if (pass.type === 'frame') cntFrame++;
+          if (pass.type === 'miss') cntMiss++;
+
+          if (!state.filters[pass.type]) return;
+
+          let isSelected = (pass.id === state.selectedSatId);
+
+          ctx.beginPath();
+          ctx.moveTo(toX(pass.startAz), toY(pass.startAlt));
+          ctx.lineTo(toX(pass.endAz), toY(pass.endAlt));
+
+          if (isSelected) {
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3.5;
+            ctx.setLineDash([6, 4]);
+          } else {
+            ctx.setLineDash([]);
+            ctx.lineWidth = pass.type === 'through' ? 2.2 : 1.6;
+            ctx.strokeStyle = (pass.type === 'through') ? '#ff4d4d' : ((pass.type === 'frame') ? '#ff9800' : '#10b981');
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      });
+
+      // Calculate Total Frame Corruptions
+      const startFrame = Math.floor(state.bracketStartPct * state.totalFrames);
+      const endFrame = Math.floor(state.bracketEndPct * state.totalFrames);
+      const totalInBracket = Math.max(0, endFrame - startFrame);
+
+      let corruptedInBracket = 0;
+      for (let f = startFrame; f < endFrame; f++) {
+        if (state.frameStatus[f] && state.frameStatus[f].type !== 'clean') corruptedInBracket++;
+      }
+
+      // Dynamic Summary Line below Sky View
+      let totalTrails = cntThrough + cntFrame + cntMiss;
+      document.getElementById('skySummaryText').innerHTML = 
+        `<strong>${totalTrails} trails in view: ${cntThrough} through target, ${cntFrame} across frame, ${cntMiss} near-miss. At ${state.subSecs}s subs, ${corruptedInBracket} of ${totalInBracket} frames are corrupted.</strong>`;
+
+      document.getElementById('fovSpecCaption').innerText = 
+        `FOV ${fovW.toFixed(2)}°×${fovH.toFixed(2)}° (blue box) inside a 7.1°×4.0° sky view · axes show Δaz/Δalt offset from target · satellites checked; only those lit by the Sun are drawn. Field rotation not modeled.`;
+    }
+
+    // --- TIMELINE CANVAS RENDERING ---
     function renderTimelineCanvas() {
       const cvs = document.getElementById('timelineCanvas');
       const ctx = cvs.getContext('2d');
@@ -495,71 +736,83 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // Draw Sub-exposure Increments across entire timeline
       const frameWidth = w / state.totalFrames;
-      const barTop = 12;
-      const barHeight = h - 24;
+      const barTop = 16;
+      const barHeight = h - 28;
 
+      // 1. Draw Mint Highlight for Longest Satellite-Free Stretch above the strip
+      if (state.longestStretch && state.longestStretch.length > 0) {
+        let x1 = state.longestStretch.startFrame * frameWidth;
+        let x2 = state.longestStretch.endFrame * frameWidth;
+        ctx.fillStyle = 'var(--mint)';
+        ctx.fillRect(x1, 4, Math.max(2, x2 - x1), 6);
+      }
+
+      // 2. Draw Sub-exposure Bar Color Increments
       for (let i = 0; i < state.totalFrames; i++) {
         let st = state.frameStatus[i].type;
         if (st === 'through') {
-          ctx.fillStyle = '#ff4d4d'; // Red for Through Target
+          ctx.fillStyle = '#ff4d4d';
         } else if (st === 'frame') {
-          ctx.fillStyle = '#ff9800'; // Orange for Across Frame
+          ctx.fillStyle = '#ff9800';
         } else {
-          ctx.fillStyle = '#10b981'; // Green for Clean Frame
+          ctx.fillStyle = '#10b981';
         }
 
         let x = i * frameWidth;
-        // Small 0.5px gap to visually show frame separation if wide enough
-        let fillW = Math.max(1, frameWidth - (frameWidth > 3 ? 0.5 : 0));
+        let fillW = Math.max(1, frameWidth);
         ctx.fillRect(x, barTop, fillW, barHeight);
       }
 
-      // Draw Selected Bracket Window
+      // 3. Draw Active Bracket Window Overlay
       const bx1 = state.bracketStartPct * w;
       const bx2 = state.bracketEndPct * w;
       const bw = bx2 - bx1;
 
-      // Darken outside bracket
-      ctx.fillStyle = 'rgba(5, 7, 10, 0.55)';
+      // Darken unselected regions
+      ctx.fillStyle = 'rgba(5, 7, 10, 0.6)';
       ctx.fillRect(0, barTop, bx1, barHeight);
       ctx.fillRect(bx2, barTop, w - bx2, barHeight);
 
-      // Highlight active bracket border
-      ctx.strokeStyle = 'var(--bracket-color)';
-      ctx.lineWidth = 3;
+      // Highlight active bracket
+      ctx.strokeStyle = '#38ef7d';
+      ctx.lineWidth = 2;
       ctx.strokeRect(bx1, barTop - 2, bw, barHeight + 4);
 
-      // Bracket Left Handle `[`
-      ctx.fillStyle = 'var(--bracket-color)';
-      ctx.fillRect(bx1 - 5, barTop - 4, 8, barHeight + 8);
-      ctx.fillStyle = '#000';
-      ctx.fillRect(bx1 - 2, barTop + 6, 2, barHeight - 12);
+      // Bracket Handles
+      ctx.fillStyle = '#38ef7d';
+      ctx.fillRect(bx1 - 4, barTop - 4, 6, barHeight + 8);
+      ctx.fillRect(bx2 - 2, barTop - 4, 6, barHeight + 8);
 
-      // Bracket Right Handle `]`
-      ctx.fillStyle = 'var(--bracket-color)';
-      ctx.fillRect(bx2 - 3, barTop - 4, 8, barHeight + 8);
-      ctx.fillStyle = '#000';
-      ctx.fillRect(bx2, barTop + 6, 2, barHeight - 12);
-
-      // Calculate Bracket Times
+      // Text Statements under timeline
       if (state.astroDusk) {
-        let startSecs = state.bracketStartPct * state.totalNightSecs;
-        let endSecs = state.bracketEndPct * state.totalNightSecs;
+        let duskStr = state.astroDusk.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let dawnStr = state.astroDawn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        let bStart = new Date(state.astroDusk.getTime() + startSecs * 1000);
-        let bEnd = new Date(state.astroDusk.getTime() + endSecs * 1000);
+        let totalClean = state.frameStatus.filter(f => f.type === 'clean').length;
+        let totalCorrupted = state.totalFrames - totalClean;
 
-        let startStr = bStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        let endStr = bEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        let durationMins = Math.round((endSecs - startSecs) / 60);
+        document.getElementById('fullNightText').innerHTML = 
+          `Full night, dusk to dawn (astronomical twilight): <strong>${duskStr}–${dawnStr}</strong>. <strong>${totalClean}</strong> of <strong>${state.totalFrames}</strong> subs clean, <strong>${totalCorrupted}</strong> corrupted, at ${state.subSecs}s each.`;
 
-        document.getElementById('bracketTimeLabel').innerText = `Bracket Window: ${startStr} – ${endStr} (${durationMins} mins)`;
+        // Longest stretch times
+        let lsSecsStart = state.longestStretch.startFrame * state.subSecs;
+        let lsSecsEnd = state.longestStretch.endFrame * state.subSecs;
+
+        let lsStart = new Date(state.astroDusk.getTime() + lsSecsStart * 1000);
+        let lsEnd = new Date(state.astroDusk.getTime() + lsSecsEnd * 1000);
+
+        let lsStartStr = lsStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let lsEndStr = lsEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let durMins = Math.round((lsSecsEnd - lsSecsStart) / 60);
+        let durHrs = (durMins / 60).toFixed(1);
+
+        document.getElementById('longestStretchText').innerHTML = 
+          `Longest satellite-free stretch tonight (astronomical twilight to twilight): <strong>${lsStartStr}–${lsEndStr} (${durHrs}h / ${durMins}m, ${state.longestStretch.length} subs at ${state.subSecs}s)</strong> — marked in mint above the strip.`;
       }
     }
 
-    // Timeline Drag / Pinch / Slide Handlers
+    // Timeline Drag / Pinch Interaction Controls
     function setupTimelineInteractions() {
       const cvs = document.getElementById('timelineCanvas');
 
@@ -603,20 +856,6 @@
       };
 
       const onPointerMove = (e) => {
-        if (e.touches && e.touches.length === 2 && state.pinchDist) {
-          let newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-          let delta = (newDist - state.pinchDist) / cvs.width;
-          state.pinchDist = newDist;
-
-          let center = (state.bracketStartPct + state.bracketEndPct) / 2;
-          let halfW = Math.max(0.04, ((state.bracketEndPct - state.bracketStartPct) / 2) + delta);
-          state.bracketStartPct = Math.max(0, center - halfW);
-          state.bracketEndPct = Math.min(1, center + halfW);
-
-          updateSimulation();
-          return;
-        }
-
         if (!state.dragging) return;
         let x = getX(e);
         let deltaPct = (x - state.dragStartX) / cvs.width;
@@ -640,7 +879,6 @@
       const onPointerUp = () => {
         state.dragging = false;
         state.dragMode = null;
-        state.pinchDist = null;
       };
 
       cvs.addEventListener('mousedown', onPointerDown);
@@ -650,100 +888,6 @@
       cvs.addEventListener('touchstart', onPointerDown);
       cvs.addEventListener('touchmove', onPointerMove);
       window.addEventListener('touchend', onPointerUp);
-    }
-
-    // --- SKY VIEW CANVAS DRAWING ---
-    function renderSkyView() {
-      const cvs = document.getElementById('skyCanvas');
-      const ctx = cvs.getContext('2d');
-      const w = cvs.width;
-      const h = cvs.height;
-
-      ctx.clearRect(0, 0, w, h);
-
-      const maxAz = 3.5; const maxAlt = 2.0;
-      const toX = (dAz) => (w / 2) + (dAz / maxAz) * (w / 2) * 0.9;
-      const toY = (dAlt) => (h / 2) - (dAlt / maxAlt) * (h / 2) * 0.85;
-
-      // Axes
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = 1;
-      for (let az = -3; az <= 3; az += 1) {
-        ctx.beginPath(); ctx.moveTo(toX(az), 0); ctx.lineTo(toX(az), h); ctx.stroke();
-      }
-      for (let alt = -1.5; alt <= 1.5; alt += 0.5) {
-        ctx.beginPath(); ctx.moveTo(0, toY(alt)); ctx.lineTo(w, toY(alt)); ctx.stroke();
-      }
-
-      // Target Object Center
-      ctx.strokeStyle = '#64748b';
-      ctx.setLineDash([3, 3]);
-      ctx.beginPath();
-      ctx.ellipse(toX(0), toY(0), 18, 10, 0, 0, 2 * Math.PI);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // FOV Box
-      const fovW = parseFloat(document.getElementById('fovW').value) || 2.95;
-      const fovH = parseFloat(document.getElementById('fovH').value) || 1.66;
-      const f1X = toX(-fovW / 2); const f2X = toX(fovW / 2);
-      const f1Y = toY(fovH / 2); const f2Y = toY(-fovH / 2);
-
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(f1X, f1Y, f2X - f1X, f2Y - f1Y);
-
-      // Filter passes inside bracket window
-      const bStartSecs = state.bracketStartPct * state.totalNightSecs;
-      const bEndSecs = state.bracketEndPct * state.totalNightSecs;
-
-      let cntThrough = 0, cntFrame = 0, cntMiss = 0;
-
-      state.passes.forEach(pass => {
-        if (pass.startSecs + pass.duration >= bStartSecs && pass.startSecs <= bEndSecs) {
-          if (pass.type === 'through') cntThrough++;
-          if (pass.type === 'frame') cntFrame++;
-          if (pass.type === 'miss') cntMiss++;
-
-          if (!state.filters[pass.type]) return;
-
-          let isSelected = (pass.id === state.selectedSatId);
-
-          ctx.beginPath();
-          ctx.moveTo(toX(pass.startAz), toY(pass.startAlt));
-          ctx.lineTo(toX(pass.endAz), toY(pass.endAlt));
-
-          if (isSelected) {
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3.5;
-            ctx.setLineDash([6, 4]);
-          } else {
-            ctx.setLineDash([]);
-            ctx.lineWidth = 1.8;
-            ctx.strokeStyle = (pass.type === 'through') ? '#ff4d4d' : ((pass.type === 'frame') ? '#ff9800' : '#10b981');
-          }
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          if (isSelected) {
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 11px sans-serif';
-            let midX = toX((pass.startAz + pass.endAz) / 2);
-            let midY = toY((pass.startAlt + pass.endAlt) / 2);
-            ctx.fillText(pass.name, midX + 8, midY - 6);
-          }
-        }
-      });
-
-      document.getElementById('cntThrough').innerText = cntThrough;
-      document.getElementById('cntFrame').innerText = cntFrame;
-      document.getElementById('cntMiss').innerText = cntMiss;
-
-      // Axis Labels
-      ctx.fillStyle = '#64748b';
-      ctx.font = '10px sans-serif';
-      ctx.fillText('ΔAzimuth Offset (°)', w / 2 - 45, h - 6);
-      ctx.fillText('ΔAltitude', 6, h / 2 - 10);
     }
 
     // --- METRICS & TABLE ---
@@ -813,7 +957,7 @@
               <div class="meta-card">
                 <div class="meta-title">${pass.name} — NORAD ${meta.norad}</div>
                 <div><strong>Operator:</strong> ${meta.operator} • <strong>Purpose:</strong> ${meta.purpose}</div>
-                <div><strong>Typical Altitude:</strong> ${meta.alt}</div>
+                <div><strong>Altitude:</strong> ${meta.alt}</div>
               </div>
             </td>
           `;
