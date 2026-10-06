@@ -11,29 +11,252 @@
     <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAADdklEQVR42u3dy3HiQBRAUUGpCnsDSTg0B0EIEwShOQl7NV55FlQxDBo+Et0t9etz1xi70PHTF2m1ed120v9a+wgEh+AQHIJDcAgOwSE4BIfgkOAQHIJDcAgOwSE4BIfgEBwSHIJDcAgOwSE4BIfgEByCQ4JDcAgOwSE4BIfgEByCQ3AIDgkOwSE4BIfgEByqpD7fW39/fPp8y7R52+V421WOJzVhEYPImowwJf/k12TwMcM2R751ocr8Q67z/ZVkzLKpkdDKusxfrBontOMcgkNwCI7W+/3+VeC39D5oLEyOCCzOZRRQYnKYFiZHiGlRGI3JUeu0eDlsc/8NcGABBxZwYAFHsm6fwyxw+nCZLJrG8eB57dPLcihZMotGcUy73OH4U6mILJ9Fcziusbi2yIevf55ILSzawjFc0neX8ekFFz/7/fE5wUddLBrCcb50JyzXoZJRPmpk0QqOJ2VcKBnlo14WTeBIKGOUj9pZxMeRaUf0+G7HNx/6iMEiOI5iX686+YjEIjKO5GuT2+uXeCya2ObIevx787aLyiIsjqzHvENuWzR9nAMLOLJvh7bDIvjkSLtOuctitf/pum5z2MFhJfLPtIh6V5JQONIupAkrkWnn5OCoaZ0ylsX5MQ+Tw55IE8HxkInWWMCBBRxYwIEFHLY34cACjkydH4wqwMIR0gq6OBhVfloEu/tqzMnx82vVvVuJwDFkUXZaBH4WQBwcs29yxrujd4+FYuKYnUWZ61XhSMzieGlWt8+42MI/eagPOy32fxdhDh8FvhoDR66VSLELcAI/WaaPx2LoI+19eVqYGXXgeHKTc+xNE8ioA0eqPZGEPpqSsVAcyXdQL3yMXboTbhkFR03HLYbbp3eVjL3BHBz1sbhYqNfuEdj4jslCcRQ+ynmNCBbLwjHjwe9rt5FkYn4cyzlV5uHIC8LhDCocWMCBBRxYtFnep0PeWPYvhy0ZViumhcnxAAXTwuQwLUwOMuAQHBIcgkPLxRH+Cz+LKtOnnRLHxelvPmaRkfAihL5G0Xrw/3NZqxXXzkRqtXlNf4TKwKh9ZmTEgUgAGXlxyK6s4BAcEhyCQ3AIDsEhOASH4BAcgkOCQ3AIDsEhOASH4BAcgkNwCA4JDsEhOASH4BAcgkNwCA7BIcEhOASH4BAcgkNwCA7BITgkOASH4FDS/gDYfKUTNjDr2QAAAABJRU5ErkJggg==">
     <link rel="manifest" href='data:application/manifest+json,{"name":"AstroSat FOV Analyzer","short_name":"AstroSat","display":"standalone","background_color":"%2307090E","theme_color":"%2307090E"}'>
     <title>Astrophotography Satellite Trail Predictor & FOV Analyzer</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        astroBg: '#07090E',
-                        astroCard: '#0B0E14',
-                        astroBorder: '#1E2638',
-                        astroRed: '#FF1744',
-                        astroOrange: '#FF6D00',
-                        astroPurple: '#BF5AF2',
-                        astroGreen: '#00E676',
-                        astroCyan: '#00E5FF'
-                    }
-                }
-            }
-        }
-    </script>
+    <style>
+/* Self-contained styles (replaces the Tailwind CDN script) */
+*,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
+html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
+body{margin:0;line-height:inherit}
+h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}
+a{color:inherit;text-decoration:inherit}
+b,strong{font-weight:bolder}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:1em}
+table{text-indent:0;border-color:inherit;border-collapse:collapse}
+button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;font-weight:inherit;line-height:inherit;color:inherit;margin:0;padding:0}
+button,select{text-transform:none}
+button,[type=button],[type=reset],[type=submit]{-webkit-appearance:button;background-color:transparent;background-image:none}
+blockquote,dl,dd,h1,h2,h3,h4,h5,h6,hr,figure,p,pre{margin:0}
+ol,ul,menu{list-style:none;margin:0;padding:0}
+input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}
+button,[role=button]{cursor:pointer}
+:disabled{cursor:default}
+img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:middle}
+[hidden]{display:none}
+.ico{display:inline-block;height:1em;width:auto;fill:currentColor;vertical-align:-.125em}
+.absolute{position:absolute}
+.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.aspect-\[16\/10\]{aspect-ratio:16/10}
+.backdrop-blur-md{-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.backdrop-blur-sm{-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.bg-\[\#0B0E14\]{background-color:#0B0E14}
+.bg-astroBg{background-color:#07090E}
+.bg-astroBg\/70{background-color:rgb(7 9 14 / 0.7)}
+.bg-astroBg\/80{background-color:rgb(7 9 14 / 0.8)}
+.bg-astroBorder{background-color:#1E2638}
+.bg-astroCard{background-color:#0B0E14}
+.bg-astroCard\/80{background-color:rgb(11 14 20 / 0.8)}
+.bg-astroCyan{background-color:#00E5FF}
+.bg-astroCyan\/80{background-color:rgb(0 229 255 / 0.8)}
+.bg-astroGreen{background-color:#00E676}
+.bg-astroOrange{background-color:#FF6D00}
+.bg-astroOrange\/20{background-color:rgb(255 109 0 / 0.2)}
+.bg-astroPurple{background-color:#BF5AF2}
+.bg-astroPurple\/20{background-color:rgb(191 90 242 / 0.2)}
+.bg-astroRed{background-color:#FF1744}
+.bg-astroRed\/20{background-color:rgb(255 23 68 / 0.2)}
+.bg-black\/70{background-color:rgb(0 0 0 / 0.7)}
+.bg-black\/80{background-color:rgb(0 0 0 / 0.8)}
+.bg-cyan-500\/25{background-color:rgb(6 182 212 / 0.25)}
+.bg-cyan-900\/50{background-color:rgb(22 78 99 / 0.5)}
+.bg-cyan-950{background-color:#083344}
+.bg-cyan-950\/60{background-color:rgb(8 51 68 / 0.6)}
+.bg-cyan-950\/70{background-color:rgb(8 51 68 / 0.7)}
+.bg-emerald-600{background-color:#059669}
+.bg-emerald-950\/40{background-color:rgb(2 44 34 / 0.4)}
+.bg-gradient-to-l{background-image:linear-gradient(to left,var(--tw-gradient-stops))}
+.bg-gradient-to-r{background-image:linear-gradient(to right,var(--tw-gradient-stops))}
+.bg-orange-950\/40{background-color:rgb(67 20 7 / 0.4)}
+.bg-purple-950\/40{background-color:rgb(59 7 100 / 0.4)}
+.bg-red-950\/40{background-color:rgb(69 10 10 / 0.4)}
+.bg-slate-900{background-color:#0f172a}
+.bg-slate-900\/90{background-color:rgb(15 23 42 / 0.9)}
+.block{display:block}
+.border{border-width:1px}
+.border-2{border-width:2px}
+.border-astroBorder{border-color:#1E2638}
+.border-astroBorder\/60{border-color:rgb(30 38 56 / 0.6)}
+.border-astroCyan{border-color:#00E5FF}
+.border-astroOrange\/60{border-color:rgb(255 109 0 / 0.6)}
+.border-astroPurple\/60{border-color:rgb(191 90 242 / 0.6)}
+.border-astroRed\/60{border-color:rgb(255 23 68 / 0.6)}
+.border-b{border-bottom-width:1px}
+.border-cyan-700\/60{border-color:rgb(14 116 144 / 0.6)}
+.border-cyan-800{border-color:#155e75}
+.border-cyan-800\/50{border-color:rgb(21 94 117 / 0.5)}
+.border-cyan-800\/60{border-color:rgb(21 94 117 / 0.6)}
+.border-emerald-800\/60{border-color:rgb(6 95 70 / 0.6)}
+.border-orange-800\/50{border-color:rgb(154 52 18 / 0.5)}
+.border-purple-800\/50{border-color:rgb(107 33 168 / 0.5)}
+.border-red-800\/50{border-color:rgb(153 27 27 / 0.5)}
+.border-white\/10{border-color:rgb(255 255 255 / 0.1)}
+.bottom-0{bottom:0}
+.bottom-1{bottom:.25rem}
+.cursor-crosshair{cursor:crosshair}
+.cursor-ew-resize{cursor:ew-resize}
+.cursor-grab{cursor:grab}
+.cursor-pointer{cursor:pointer}
+.divide-astroBorder\/50>:not([hidden])~:not([hidden]){border-color:rgb(30 38 56 / 0.5)}
+.divide-y>:not([hidden])~:not([hidden]){border-top-width:1px}
+.drop-shadow{filter:drop-shadow(0 1px 2px rgb(0 0 0 / .1)) drop-shadow(0 1px 1px rgb(0 0 0 / .06))}
+.duration-300{transition-duration:300ms}
+.fixed{position:fixed}
+.flex{display:flex}
+.flex-1{flex:1 1 0%}
+.flex-col{flex-direction:column}
+.flex-wrap{flex-wrap:wrap}
+.font-bold{font-weight:700}
+.font-medium{font-weight:500}
+.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+.font-normal{font-weight:400}
+.font-sans{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
+.font-semibold{font-weight:600}
+.from-amber-950\/40{--tw-gradient-from:rgb(69 26 3 / 0.4);--tw-gradient-to:rgb(69 26 3 / 0);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}
+.gap-0\.5{gap:.125rem}
+.gap-1{gap:.25rem}
+.gap-1\.5{gap:.375rem}
+.gap-2{gap:.5rem}
+.gap-3{gap:.75rem}
+.gap-4{gap:1rem}
+.gap-5{gap:1.25rem}
+.grid{display:grid}
+.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
+.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.h-12{height:3rem}
+.h-2\.5{height:.625rem}
+.h-3{height:.75rem}
+.h-full{height:100%}
+.inset-0{top:0;right:0;bottom:0;left:0}
+.inset-y-0{top:0;bottom:0}
+.italic{font-style:italic}
+.items-center{align-items:center}
+.items-end{align-items:flex-end}
+.justify-between{justify-content:space-between}
+.justify-center{justify-content:center}
+.leading-relaxed{line-height:1.625}
+.left-0{left:0}
+.left-3{left:.75rem}
+.list-disc{list-style-type:disc}
+.list-inside{list-style-position:inside}
+.max-h-\[220px\]{max-height:220px}
+.max-h-\[90vh\]{max-height:90vh}
+.max-w-7xl{max-width:80rem}
+.max-w-md{max-width:28rem}
+.max-w-xl{max-width:36rem}
+.mb-0\.5{margin-bottom:.125rem}
+.mb-1{margin-bottom:.25rem}
+.min-h-\[220px\]{min-height:220px}
+.min-h-screen{min-height:100vh}
+.mt-1{margin-top:.25rem}
+.mx-auto{margin-left:auto;margin-right:auto}
+.opacity-40{opacity:.4}
+.opacity-80{opacity:.8}
+.outline-none{outline:2px solid transparent;outline-offset:2px}
+.overflow-hidden{overflow:hidden}
+.overflow-x-hidden{overflow-x:hidden}
+.overflow-y-auto{overflow-y:auto}
+.p-2{padding:.5rem}
+.p-2\.5{padding:.625rem}
+.p-3{padding:.75rem}
+.p-4{padding:1rem}
+.p-5{padding:1.25rem}
+.p-6{padding:1.5rem}
+.pb-2{padding-bottom:.5rem}
+.pb-3{padding-bottom:.75rem}
+.pointer-events-auto{pointer-events:auto}
+.pointer-events-none{pointer-events:none}
+.px-1{padding-left:.25rem;padding-right:.25rem}
+.px-1\.5{padding-left:.375rem;padding-right:.375rem}
+.px-2{padding-left:.5rem;padding-right:.5rem}
+.px-2\.5{padding-left:.625rem;padding-right:.625rem}
+.px-3{padding-left:.75rem;padding-right:.75rem}
+.px-4{padding-left:1rem;padding-right:1rem}
+.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}
+.py-1{padding-top:.25rem;padding-bottom:.25rem}
+.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}
+.py-2{padding-top:.5rem;padding-bottom:.5rem}
+.py-3{padding-top:.75rem;padding-bottom:.75rem}
+.relative{position:relative}
+.right-0{right:0}
+.right-3{right:.75rem}
+.right-4{right:1rem}
+.rounded{border-radius:.25rem}
+.rounded-2xl{border-radius:1rem}
+.rounded-full{border-radius:9999px}
+.rounded-l-md{border-top-left-radius:.375rem;border-bottom-left-radius:.375rem}
+.rounded-lg{border-radius:.5rem}
+.rounded-r-md{border-top-right-radius:.375rem;border-bottom-right-radius:.375rem}
+.rounded-xl{border-radius:.75rem}
+.shadow{box-shadow:0 1px 3px 0 rgb(0 0 0 / .1),0 1px 2px -1px rgb(0 0 0 / .1)}
+.shadow-2xl{box-shadow:0 25px 50px -12px rgb(0 0 0 / .25)}
+.shadow-inner{box-shadow:inset 0 2px 4px 0 rgb(0 0 0 / .05)}
+.shadow-lg{box-shadow:0 10px 15px -3px rgb(0 0 0 / .1),0 4px 6px -4px rgb(0 0 0 / .1)}
+.shadow-xl{box-shadow:0 20px 25px -5px rgb(0 0 0 / .1),0 8px 10px -6px rgb(0 0 0 / .1)}
+.space-y-0\.5>:not([hidden])~:not([hidden]){margin-top:.125rem}
+.space-y-3>:not([hidden])~:not([hidden]){margin-top:.75rem}
+.sticky{position:sticky}
+.text-2xl{font-size:1.5rem;line-height:2rem}
+.text-\[10px\]{font-size:10px}
+.text-\[11px\]{font-size:11px}
+.text-\[9px\]{font-size:9px}
+.text-astroCyan{color:#00E5FF}
+.text-astroGreen{color:#00E676}
+.text-astroOrange{color:#FF6D00}
+.text-astroPurple{color:#BF5AF2}
+.text-astroRed{color:#FF1744}
+.text-base{font-size:1rem;line-height:1.5rem}
+.text-black{color:#000000}
+.text-center{text-align:center}
+.text-ellipsis{text-overflow:ellipsis}
+.text-emerald-300{color:#6ee7b7}
+.text-gray-200{color:#e5e7eb}
+.text-gray-300{color:#d1d5db}
+.text-gray-400{color:#9ca3af}
+.text-gray-500{color:#6b7280}
+.text-left{text-align:left}
+.text-lg{font-size:1.125rem;line-height:1.75rem}
+.text-sm{font-size:.875rem;line-height:1.25rem}
+.text-white{color:#ffffff}
+.text-xl{font-size:1.25rem;line-height:1.75rem}
+.text-xs{font-size:.75rem;line-height:1rem}
+.to-transparent{--tw-gradient-to:transparent}
+.top-0{top:0}
+.top-1{top:.25rem}
+.top-3{top:.75rem}
+.top-4{top:1rem}
+.tracking-wide{letter-spacing:.025em}
+.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:150ms}
+.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:150ms}
+.transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:150ms}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uppercase{text-transform:uppercase}
+.w-0\.5{width:.125rem}
+.w-1{width:.25rem}
+.w-12{width:3rem}
+.w-2\.5{width:.625rem}
+.w-3\.5{width:.875rem}
+.w-full{width:100%}
+.whitespace-nowrap{white-space:nowrap}
+.z-10{z-index:10}
+.z-20{z-index:20}
+.z-30{z-index:30}
+.z-50{z-index:50}
+.hidden{display:none}
+.hover\:bg-astroCyan:hover{background-color:#00E5FF}
+.hover\:bg-astroOrange\/30:hover{background-color:rgb(255 109 0 / 0.3)}
+.hover\:bg-astroPurple\/30:hover{background-color:rgb(191 90 242 / 0.3)}
+.hover\:bg-astroRed\/30:hover{background-color:rgb(255 23 68 / 0.3)}
+.hover\:bg-cyan-400:hover{background-color:#22d3ee}
+.hover\:bg-cyan-500\/35:hover{background-color:rgb(6 182 212 / 0.35)}
+.hover\:bg-cyan-900:hover{background-color:#164e63}
+.hover\:bg-emerald-500:hover{background-color:#10b981}
+.hover\:bg-slate-700:hover{background-color:#334155}
+.hover\:bg-slate-800\/60:hover{background-color:rgb(30 41 59 / 0.6)}
+.hover\:text-white:hover{color:#ffffff}
+.focus\:border-astroCyan:focus{border-color:#00E5FF}
+.active\:cursor-grabbing:active{cursor:grabbing}
+@media (min-width:640px){.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:1024px){.lg\:col-span-2{grid-column:span 2/span 2}.lg\:col-span-5{grid-column:span 5/span 5}.lg\:col-span-7{grid-column:span 7/span 7}.lg\:grid-cols-12{grid-template-columns:repeat(12,minmax(0,1fr))}.lg\:grid-cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}}
+    </style>
     <style>
         body {
             background-color: #07090E;
@@ -76,7 +299,7 @@
     <header class="w-full bg-astroCard border-b border-astroBorder px-4 py-3 sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 shadow-xl">
         <div class="flex items-center gap-3">
             <div class="p-2 bg-cyan-950/60 text-astroCyan rounded-xl border border-cyan-800/50 flex items-center justify-center">
-                <i class="fa-solid font-bold fa-satellite text-xl"></i>
+                <svg class="ico font-bold text-xl" viewBox="0 0 512 512" aria-hidden="true"><path d="M233 7c-9.4-9.4-24.6-9.4-33.9 0l-96 96c-9.4 9.4-9.4 24.6 0 33.9l89.4 89.4-15.5 15.5C152.3 230.4 124.9 224 96 224c-31.7 0-61.5 7.7-87.8 21.2c-9 4.7-10.3 16.7-3.1 23.8L112.7 376.7 96.3 393.1c-2.6-.7-5.4-1.1-8.3-1.1c-17.7 0-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32c0-2.9-.4-5.6-1.1-8.3l16.4-16.4L242.9 506.9c7.2 7.2 19.2 5.9 23.8-3.1C280.3 477.5 288 447.7 288 416c0-28.9-6.4-56.3-17.8-80.9l15.5-15.5L375 409c9.4 9.4 24.6 9.4 33.9 0l96-96c9.4-9.4 9.4-24.6 0-33.9l-89.4-89.4 55-55c12.5-12.5 12.5-32.8 0-45.3l-48-48c-12.5-12.5-32.8-12.5-45.3 0l-55 55L233 7zm159 351l-72.4-72.4 62.1-62.1L454.1 296 392 358.1zM226.3 192.4L153.9 120 216 57.9l72.4 72.4-62.1 62.1z"/></svg>
             </div>
             <div>
                 <h1 class="text-lg font-bold tracking-wide text-white flex items-center gap-2">
@@ -90,10 +313,10 @@
         <!-- Action Buttons -->
         <div class="flex items-center gap-2">
             <button id="guideBtn" class="px-3 py-1.5 bg-astroBorder hover:bg-slate-700 text-xs font-medium rounded-lg text-gray-200 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-circle-question text-astroCyan"></i> User Guide
+                <svg class="ico text-astroCyan" viewBox="0 0 512 512" aria-hidden="true"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM169.8 165.3c7.9-22.3 29.1-37.3 52.8-37.3l58.3 0c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24l0-13.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1l-58.3 0c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"/></svg> User Guide
             </button>
             <button id="resetSessionBtn" class="px-3 py-1.5 bg-astroBorder hover:bg-slate-700 text-xs font-medium rounded-lg text-gray-200 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-rotate text-gray-400"></i> Reset
+                <svg class="ico text-gray-400" viewBox="0 0 512 512" aria-hidden="true"><path d="M142.9 142.9c-17.5 17.5-30.1 38-37.8 59.8c-5.9 16.7-24.2 25.4-40.8 19.5s-25.4-24.2-19.5-40.8C55.6 150.7 73.2 122 97.6 97.6c87.2-87.2 228.3-87.5 315.8-1L455 55c6.9-6.9 17.2-8.9 26.2-5.2s14.8 12.5 14.8 22.2l0 128c0 13.3-10.7 24-24 24l-8.4 0c0 0 0 0 0 0L344 224c-9.7 0-18.5-5.8-22.2-14.8s-1.7-19.3 5.2-26.2l41.1-41.1c-62.6-61.5-163.1-61.2-225.3 1zM16 312c0-13.3 10.7-24 24-24l7.6 0 .7 0L168 288c9.7 0 18.5 5.8 22.2 14.8s1.7 19.3-5.2 26.2l-41.1 41.1c62.6 61.5 163.1 61.2 225.3-1c17.5-17.5 30.1-38 37.8-59.8c5.9-16.7 24.2-25.4 40.8-19.5s25.4 24.2 19.5 40.8c-10.8 30.6-28.4 59.3-52.9 83.8c-87.2 87.2-228.3 87.5-315.8 1L57 457c-6.9 6.9-17.2 8.9-26.2 5.2S16 449.7 16 440l0-119.6 0-.7 0-7.6z"/></svg> Reset
             </button>
         </div>
     </header>
@@ -106,10 +329,10 @@
             <div class="lg:col-span-2 bg-astroBg/70 p-2.5 rounded-xl border border-astroBorder flex flex-col gap-1.5">
                 <div class="flex items-center justify-between">
                     <span class="text-gray-400 font-medium flex items-center gap-1">
-                        <i class="fa-solid fa-location-dot text-astroCyan"></i> Location (Alt/Az Observer)
+                        <svg class="ico text-astroCyan" viewBox="0 0 384 512" aria-hidden="true"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg> Location (Alt/Az Observer)
                     </span>
                     <button id="gpsBtn" class="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 text-astroCyan border border-cyan-700/60 rounded text-[11px] font-semibold transition flex items-center gap-1">
-                        <i class="fa-solid fa-crosshairs"></i> Use GPS
+                        <svg class="ico " viewBox="0 0 512 512" aria-hidden="true"><path d="M256 0c17.7 0 32 14.3 32 32l0 10.4c93.7 13.9 167.7 88 181.6 181.6l10.4 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-10.4 0c-13.9 93.7-88 167.7-181.6 181.6l0 10.4c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-10.4C130.3 455.7 56.3 381.7 42.4 288L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l10.4 0C56.3 130.3 130.3 56.3 224 42.4L224 32c0-17.7 14.3-32 32-32zM107.4 288c12.5 58.3 58.4 104.1 116.6 116.6l0-20.6c0-17.7 14.3-32 32-32s32 14.3 32 32l0 20.6c58.3-12.5 104.1-58.4 116.6-116.6L384 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l20.6 0C392.1 165.7 346.3 119.9 288 107.4l0 20.6c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-20.6C165.7 119.9 119.9 165.7 107.4 224l20.6 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-20.6 0zM256 224a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg> Use GPS
                     </button>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
@@ -127,7 +350,7 @@
             <!-- Date & Start Time Group -->
             <div class="bg-astroBg/70 p-2.5 rounded-xl border border-astroBorder flex flex-col gap-1.5">
                 <span class="text-gray-400 font-medium flex items-center gap-1">
-                    <i class="fa-regular fa-calendar-days text-astroCyan"></i> Imaging Night
+                    <svg class="ico text-astroCyan" viewBox="0 0 448 512" aria-hidden="true"><path d="M152 24c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40L64 64C28.7 64 0 92.7 0 128l0 16 0 48L0 448c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-256 0-48 0-16c0-35.3-28.7-64-64-64l-40 0 0-40c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 40L152 64l0-40zM48 192l80 0 0 56-80 0 0-56zm0 104l80 0 0 64-80 0 0-64zm128 0l96 0 0 64-96 0 0-64zm144 0l80 0 0 64-80 0 0-64zm80-48l-80 0 0-56 80 0 0 56zm0 160l0 40c0 8.8-7.2 16-16 16l-64 0 0-56 80 0zm-128 0l0 56-96 0 0-56 96 0zm-144 0l0 56-64 0c-8.8 0-16-7.2-16-16l0-40 80 0zM272 248l-96 0 0-56 96 0 0 56z"/></svg> Imaging Night
                 </span>
                 <div class="grid grid-cols-1 gap-1.5">
                     <input type="date" id="dateInput" class="w-full bg-astroCard border border-astroBorder rounded px-2 py-1 text-white focus:border-astroCyan outline-none">
@@ -141,7 +364,7 @@
             <!-- Telescope & Optic Preset Group -->
             <div class="bg-astroBg/70 p-2.5 rounded-xl border border-astroBorder flex flex-col gap-1.5">
                 <span class="text-gray-400 font-medium flex items-center gap-1">
-                    <i class="fa-solid fa-telescope text-astroCyan"></i> Telescope Preset
+                     Telescope Preset
                 </span>
                 <select id="telescopeSelect" class="w-full bg-astroCard border border-astroBorder rounded px-2 py-1 text-white focus:border-astroCyan outline-none">
                     <optgroup label="DWARFLAB">
@@ -177,7 +400,7 @@
             <div class="lg:col-span-2 bg-astroBg/70 p-2.5 rounded-xl border border-astroBorder flex flex-col gap-1.5">
                 <div class="flex items-center justify-between">
                     <span class="text-gray-400 font-medium flex items-center gap-1">
-                        <i class="fa-solid fa-crosshairs text-astroCyan"></i> Target Catalog (M1 – M110)
+                        <svg class="ico text-astroCyan" viewBox="0 0 512 512" aria-hidden="true"><path d="M256 0c17.7 0 32 14.3 32 32l0 10.4c93.7 13.9 167.7 88 181.6 181.6l10.4 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-10.4 0c-13.9 93.7-88 167.7-181.6 181.6l0 10.4c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-10.4C130.3 455.7 56.3 381.7 42.4 288L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l10.4 0C56.3 130.3 130.3 56.3 224 42.4L224 32c0-17.7 14.3-32 32-32zM107.4 288c12.5 58.3 58.4 104.1 116.6 116.6l0-20.6c0-17.7 14.3-32 32-32s32 14.3 32 32l0 20.6c58.3-12.5 104.1-58.4 116.6-116.6L384 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l20.6 0C392.1 165.7 346.3 119.9 288 107.4l0 20.6c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-20.6C165.7 119.9 119.9 165.7 107.4 224l20.6 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-20.6 0zM256 224a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg> Target Catalog (M1 – M110)
                     </span>
                     <span id="targetDimsBadge" class="text-[10px] text-astroCyan bg-cyan-950/70 px-2 py-0.5 rounded border border-cyan-800">178' x 60'</span>
                 </div>
@@ -206,7 +429,7 @@
                 <!-- Canvas Title & Dynamic Specs Header -->
                 <div class="flex items-center justify-between border-b border-astroBorder/60 pb-3">
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-camera text-astroCyan"></i>
+                        <svg class="ico text-astroCyan" viewBox="0 0 512 512" aria-hidden="true"><path d="M149.1 64.8L138.7 96 64 96C28.7 96 0 124.7 0 160L0 416c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64l-74.7 0L362.9 64.8C356.4 45.2 338.1 32 317.4 32L194.6 32c-20.7 0-39 13.2-45.5 32.8zM256 192a96 96 0 1 1 0 192 96 96 0 1 1 0-192z"/></svg>
                         <h2 class="text-sm font-bold text-white tracking-wide">Telescope FOV Simulator</h2>
                     </div>
                     <div class="text-xs text-gray-400 flex items-center gap-3">
@@ -222,7 +445,7 @@
                     <!-- Alt/Az Center Reticle Overlay Stats -->
                     <div class="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono text-gray-300 flex flex-col gap-0.5 pointer-events-none">
                         <div class="text-astroCyan font-semibold flex items-center gap-1">
-                            <i class="fa-solid fa-compass"></i> Reticle Center
+                            <svg class="ico " viewBox="0 0 512 512" aria-hidden="true"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm50.7-186.9L162.4 380.6c-19.4 7.5-38.5-11.6-31-31l55.5-144.3c3.3-8.5 9.9-15.1 18.4-18.4l144.3-55.5c19.4-7.5 38.5 11.6 31 31L325.1 306.7c-3.2 8.5-9.9 15.1-18.4 18.4zM288 256a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"/></svg> Reticle Center
                         </div>
                         <div>Alt: <span id="canvasAltCenter" class="text-white">62.00°</span></div>
                         <div>Az: <span id="canvasAzCenter" class="text-white">70.00°</span></div>
@@ -275,7 +498,7 @@
             <div class="bg-astroCard border border-astroBorder rounded-2xl p-4 flex flex-col gap-3 shadow-2xl">
                 <div class="flex items-center justify-between border-b border-astroBorder/60 pb-2">
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-timeline text-astroCyan"></i>
+                        <svg class="ico text-astroCyan" viewBox="0 0 640 512" aria-hidden="true"><path d="M128 72a24 24 0 1 1 0 48 24 24 0 1 1 0-48zm32 97.3c28.3-12.3 48-40.5 48-73.3c0-44.2-35.8-80-80-80S48 51.8 48 96c0 32.8 19.7 61 48 73.3L96 224l-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l256 0 0 54.7c-28.3 12.3-48 40.5-48 73.3c0 44.2 35.8 80 80 80s80-35.8 80-80c0-32.8-19.7-61-48-73.3l0-54.7 256 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-54.7c28.3-12.3 48-40.5 48-73.3c0-44.2-35.8-80-80-80s-80 35.8-80 80c0 32.8 19.7 61 48 73.3l0 54.7-320 0 0-54.7zM488 96a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zM320 392a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"/></svg>
                         <h2 class="text-sm font-bold text-white">Full Night Session Timeline</h2>
                     </div>
                     <span id="sessionTimeRange" class="text-xs font-mono text-astroCyan font-semibold">21:00 - 23:00 (2.0h)</span>
@@ -317,7 +540,7 @@
                 <!-- Longest Satellite Free Stretch Indicator -->
                 <div class="bg-emerald-950/40 border border-emerald-800/60 p-2.5 rounded-xl flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-sparkles text-astroGreen text-sm"></i>
+                        
                         <div>
                             <div class="text-emerald-300 font-medium">Longest Satellite-Free Stretch</div>
                             <div id="cleanStretchLabel" class="text-[11px] text-gray-300 font-mono">22:14 – 23:05 (51 mins clean)</div>
@@ -333,7 +556,7 @@
             <div class="bg-astroCard border border-astroBorder rounded-2xl p-4 flex flex-col gap-3 shadow-2xl">
                 <div class="flex items-center justify-between border-b border-astroBorder/60 pb-2">
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie text-astroCyan"></i>
+                        <svg class="ico text-astroCyan" viewBox="0 0 576 512" aria-hidden="true"><path d="M304 240l0-223.4c0-9 7-16.6 16-16.6C443.7 0 544 100.3 544 224c0 9-7.6 16-16.6 16L304 240zM32 272C32 150.7 122.1 50.3 239 34.3c9.2-1.3 17 6.1 17 15.4L256 288 412.5 444.5c6.7 6.7 6.2 17.7-1.5 23.1C371.8 495.6 323.8 512 272 512C139.5 512 32 404.6 32 272zm526.4 16c9.3 0 16.6 7.8 15.4 17c-7.7 55.9-34.6 105.6-73.9 142.3c-6 5.6-15.4 5.2-21.2-.7L320 288l238.4 0z"/></svg>
                         <h2 class="text-sm font-bold text-white">Sub-Exposure Frame Analyzer</h2>
                     </div>
                     <div class="flex items-center gap-1 text-xs">
@@ -390,7 +613,7 @@
             <div class="bg-astroCard border border-astroBorder rounded-2xl p-4 flex flex-col gap-3 shadow-2xl flex-1 min-h-[220px]">
                 <div class="flex items-center justify-between border-b border-astroBorder/60 pb-2">
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-list-check text-astroCyan"></i>
+                        <svg class="ico text-astroCyan" viewBox="0 0 512 512" aria-hidden="true"><path d="M152.1 38.2c9.9 8.9 10.7 24 1.8 33.9l-72 80c-4.4 4.9-10.6 7.8-17.2 7.9s-12.9-2.4-17.6-7L7 113C-2.3 103.6-2.3 88.4 7 79s24.6-9.4 33.9 0l22.1 22.1 55.1-61.2c8.9-9.9 24-10.7 33.9-1.8zm0 160c9.9 8.9 10.7 24 1.8 33.9l-72 80c-4.4 4.9-10.6 7.8-17.2 7.9s-12.9-2.4-17.6-7L7 273c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l22.1 22.1 55.1-61.2c8.9-9.9 24-10.7 33.9-1.8zM224 96c0-17.7 14.3-32 32-32l224 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-224 0c-17.7 0-32-14.3-32-32zm0 160c0-17.7 14.3-32 32-32l224 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-224 0c-17.7 0-32-14.3-32-32zM160 416c0-17.7 14.3-32 32-32l288 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-288 0c-17.7 0-32-14.3-32-32zM48 368a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"/></svg>
                         <h2 class="text-sm font-bold text-white">Predicted Passes in Window</h2>
                     </div>
                     <span class="text-[10px] text-gray-400">(Click row for Telemetry)</span>
@@ -421,11 +644,11 @@
     <div id="telemetryModal" class="fixed inset-0 z-50 hidden flex items-end justify-center p-4 pointer-events-none">
         <div class="bg-astroCard border border-astroBorder rounded-2xl max-w-md w-full p-5 shadow-2xl flex flex-col gap-4 relative pointer-events-auto">
             <button id="closeTelemetryModal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
-                <i class="fa-solid fa-xmark"></i>
+                <svg class="ico " viewBox="0 0 384 512" aria-hidden="true"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
             </button>
             <div class="flex items-center gap-3">
                 <div class="p-3 bg-cyan-950 text-astroCyan rounded-xl border border-cyan-800">
-                    <i class="fa-solid fa-satellite-dish text-2xl"></i>
+                    <svg class="ico text-2xl" viewBox="0 0 512 512" aria-hidden="true"><path d="M192 32c0-17.7 14.3-32 32-32C383.1 0 512 128.9 512 288c0 17.7-14.3 32-32 32s-32-14.3-32-32C448 164.3 347.7 64 224 64c-17.7 0-32-14.3-32-32zM60.6 220.6L164.7 324.7l28.4-28.4c-.7-2.6-1.1-5.4-1.1-8.3c0-17.7 14.3-32 32-32s32 14.3 32 32s-14.3 32-32 32c-2.9 0-5.6-.4-8.3-1.1l-28.4 28.4L291.4 451.4c14.5 14.5 11.8 38.8-7.3 46.3C260.5 506.9 234.9 512 208 512C93.1 512 0 418.9 0 304c0-26.9 5.1-52.5 14.4-76.1c7.5-19 31.8-21.8 46.3-7.3zM224 96c106 0 192 86 192 192c0 17.7-14.3 32-32 32s-32-14.3-32-32c0-70.7-57.3-128-128-128c-17.7 0-32-14.3-32-32s14.3-32 32-32z"/></svg>
                 </div>
                 <div>
                     <h3 id="modalSatName" class="text-base font-bold text-white">STARLINK-30192</h3>
@@ -468,10 +691,10 @@
         <div class="bg-astroCard border border-astroBorder rounded-2xl max-w-xl w-full p-6 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-astroBorder pb-3">
                 <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-book-open text-astroCyan"></i> AstroSat FOV Analyzer User Guide
+                    <svg class="ico text-astroCyan" viewBox="0 0 576 512" aria-hidden="true"><path d="M249.6 471.5c10.8 3.8 22.4-4.1 22.4-15.5l0-377.4c0-4.2-1.6-8.4-5-11C247.4 52 202.4 32 144 32C93.5 32 46.3 45.3 18.1 56.1C6.8 60.5 0 71.7 0 83.8L0 454.1c0 11.9 12.8 20.2 24.1 16.5C55.6 460.1 105.5 448 144 448c33.9 0 79 14 105.6 23.5zm76.8 0C353 462 398.1 448 432 448c38.5 0 88.4 12.1 119.9 22.6c11.3 3.8 24.1-4.6 24.1-16.5l0-370.3c0-12.1-6.8-23.3-18.1-27.6C529.7 45.3 482.5 32 432 32c-58.4 0-103.4 20-123 35.6c-3.3 2.6-5 6.8-5 11L304 456c0 11.4 11.7 19.3 22.4 15.5z"/></svg> AstroSat FOV Analyzer User Guide
                 </h3>
                 <button id="closeGuideModal" class="text-gray-400 hover:text-white text-lg">
-                    <i class="fa-solid fa-xmark"></i>
+                    <svg class="ico " viewBox="0 0 384 512" aria-hidden="true"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
                 </button>
             </div>
 
@@ -1309,7 +1532,7 @@
 
                 tr.innerHTML = `
                     <td class="p-2 font-semibold text-white flex items-center gap-1.5">
-                        <i class="fa-solid fa-satellite text-[10px] text-gray-400"></i>
+                        <svg class="ico text-[10px] text-gray-400" viewBox="0 0 512 512" aria-hidden="true"><path d="M233 7c-9.4-9.4-24.6-9.4-33.9 0l-96 96c-9.4 9.4-9.4 24.6 0 33.9l89.4 89.4-15.5 15.5C152.3 230.4 124.9 224 96 224c-31.7 0-61.5 7.7-87.8 21.2c-9 4.7-10.3 16.7-3.1 23.8L112.7 376.7 96.3 393.1c-2.6-.7-5.4-1.1-8.3-1.1c-17.7 0-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32c0-2.9-.4-5.6-1.1-8.3l16.4-16.4L242.9 506.9c7.2 7.2 19.2 5.9 23.8-3.1C280.3 477.5 288 447.7 288 416c0-28.9-6.4-56.3-17.8-80.9l15.5-15.5L375 409c9.4 9.4 24.6 9.4 33.9 0l96-96c9.4-9.4 9.4-24.6 0-33.9l-89.4-89.4 55-55c12.5-12.5 12.5-32.8 0-45.3l-48-48c-12.5-12.5-32.8-12.5-45.3 0l-55 55L233 7zm159 351l-72.4-72.4 62.1-62.1L454.1 296 392 358.1zM226.3 192.4L153.9 120 216 57.9l72.4 72.4-62.1 62.1z"/></svg>
                         ${pass.name}
                     </td>
                     <td class="p-2 text-gray-300">${pass.timeStr}</td>
