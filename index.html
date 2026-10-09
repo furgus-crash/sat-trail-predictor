@@ -491,7 +491,11 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
                 <!-- Satellite data / calculation status -->
                 <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400">
                     <span id="satStatus">Loading satellite data…</span>
-                    <button id="updateSatBtn" class="px-2.5 py-1 bg-astroBorder hover:bg-slate-700 rounded text-gray-200 transition">Update data</button>
+                    <div class="flex items-center gap-2">
+                        <button id="updateSatBtn" class="px-2.5 py-1 bg-astroBorder hover:bg-slate-700 rounded text-gray-200 transition">Update data</button>
+                        <button id="loadSatFileBtn" class="px-2.5 py-1 bg-astroBorder hover:bg-slate-700 rounded text-gray-200 transition">Load file</button>
+                        <input id="satFileInput" type="file" accept=".txt,.tle,text/plain" class="hidden">
+                    </div>
                 </div>
                 <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-astroBorder">
                     <div id="satProgressFill" class="h-full bg-astroCyan transition-all duration-300" style="width: 0%;"></div>
@@ -1263,7 +1267,8 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
             try {
                 const db = await idbOpen();
                 await new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
-            } catch (e) { /* saving is optional */ }
+                return true;
+            } catch (e) { return false; }
         }
         function parseTLEText(text) {
             const lines = text.split(/\r?\n/), out = [];
@@ -1309,10 +1314,16 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
                             } finally { clearTimeout(killer); }
                             if (text.length < 100000) throw new Error('unexpected reply');
                             use = { ts: Date.now(), text };
-                            await idbSet('tle', use);
+                            if (!(await idbSet('tle', use))) note = ' (could not save a copy on this device)';
                         } catch (err) {
                             note = rec ? ' (could not refresh, using saved copy)' : '';
-                            if (!rec) { setSatStatus('Could not download satellite data (' + err.message + '). Connect and tap Update data.', 0); return; }
+                            if (!rec) {
+                                const refused = /HTTP (403|429)/.test(err.message);
+                                setSatStatus(refused
+                                    ? 'CelesTrak refused the download (' + err.message + '). It allows only one download of this list per internet connection about every 2 hours, so another device on your Wi-Fi probably fetched it recently. Try Update data again later, switch to mobile data, or use Load file.'
+                                    : 'Could not download satellite data (' + err.message + '). Connect and tap Update data, or use Load file.', 0);
+                                return;
+                            }
                         }
                     } else if (force) {
                         note = ' (already up to date)';
@@ -2117,6 +2128,22 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
             // Refresh the satellite data on demand
             document.getElementById('updateSatBtn').onclick = async () => {
                 await loadSatData(true);
+                generateSatellitePasses();
+                updateAllViews();
+            };
+
+            // Load a satellite list (TLE text file) from the device, e.g. one downloaded from CelesTrak elsewhere
+            document.getElementById('loadSatFileBtn').onclick = () => document.getElementById('satFileInput').click();
+            document.getElementById('satFileInput').onchange = async (e) => {
+                const f = e.target.files[0];
+                e.target.value = '';
+                if (!f) return;
+                const text = await f.text();
+                if (parseTLEText(text).length < 20) { setSatStatus('That file does not look like a satellite list (it needs TLE entries: lines starting with "1 " and "2 ").', 0); return; }
+                const saved = await idbSet('tle', { ts: f.lastModified || Date.now(), text });
+                appState.sats = null; appState.tracks = null; appState.tracksKey = '';
+                await loadSatData(false);
+                if (!saved) appState.dataNote = ' (could not save a copy on this device)';
                 generateSatellitePasses();
                 updateAllViews();
             };
