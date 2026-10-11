@@ -291,6 +291,17 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
         #sessionBox, #leftHandle, #rightHandle {
             touch-action: none;
         }
+        [id^="guide-"] { scroll-margin-top: 3rem; }
+        #dateInput {
+            -webkit-appearance: none;
+            appearance: none;
+            display: block;
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            min-height: 1.75rem;
+            text-align: left;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-astroBg text-gray-200 flex flex-col font-sans antialiased overflow-x-hidden">
@@ -304,7 +315,7 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
             <div>
                 <h1 class="text-lg font-bold tracking-wide text-white flex items-center gap-2">
                     AstroSat FOV Analyzer
-                    <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-cyan-950 text-astroCyan border border-cyan-800/60">v3.4 Live</span>
+                    <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-cyan-950 text-astroCyan border border-cyan-800/60">v4.0</span>
                 </h1>
                 <p class="text-xs text-gray-400">Satellite Trail Predictor & Sub-Exposure Efficiency Simulator</p>
             </div>
@@ -368,8 +379,8 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
                 </span>
                 <select id="telescopeSelect" class="w-full bg-astroCard border border-astroBorder rounded px-2 py-1 text-white focus:border-astroCyan outline-none">
                     <optgroup label="DWARFLAB">
-                        <option value="dwarf3" selected>DWARFLAB Dwarf 3 (3.0° x 1.7°)</option>
-                        <option value="dwarf2">DWARFLAB Dwarf II (3.1° x 1.7°)</option>
+                        <option value="dwarf3" selected>DWARFLAB Dwarf 3 (2.95° x 1.66°)</option>
+                        <option value="dwarf2">DWARFLAB Dwarf II (3.2° x 1.8°)</option>
                     </optgroup>
                     <optgroup label="ZWO Seestar">
                         <option value="seestar_s50">ZWO Seestar S50 (1.29° x 0.73°)</option>
@@ -377,16 +388,16 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
                     </optgroup>
                     <optgroup label="Vaonis">
                         <option value="vespera2">Vaonis Vespera II (2.50° x 1.40°)</option>
-                        <option value="vespera_pro">Vaonis Vespera Pro (1.80° x 1.80°)</option>
+                        <option value="vespera_pro">Vaonis Vespera Pro (1.60° x 1.60°)</option>
                         <option value="vespera_classic">Vaonis Vespera Classic (1.60° x 0.90°)</option>
                         <option value="stellina">Vaonis Stellina (1.00° x 0.70°)</option>
                         <option value="hestia">Vaonis Hestia (1.80° x 1.80°)</option>
                     </optgroup>
                     <optgroup label="Unistellar">
-                        <option value="evscope2">Unistellar eVscope 2 (0.57° x 0.76°)</option>
-                        <option value="equinox2">Unistellar eQuinox 2 (0.57° x 0.76°)</option>
-                        <option value="odyssey">Unistellar Odyssey (0.56° x 0.75°)</option>
-                        <option value="odyssey_pro">Unistellar Odyssey Pro (0.56° x 0.75°)</option>
+                        <option value="evscope2">Unistellar eVscope 2 (0.57° x 0.78°)</option>
+                        <option value="equinox2">Unistellar eQuinox 2 (0.57° x 0.78°)</option>
+                        <option value="odyssey">Unistellar Odyssey (0.57° x 0.76°)</option>
+                        <option value="odyssey_pro">Unistellar Odyssey Pro (0.57° x 0.76°)</option>
                     </optgroup>
                     <option value="custom">-- Custom FOV Dimensions --</option>
                 </select>
@@ -433,8 +444,7 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
                         <h2 class="text-sm font-bold text-white tracking-wide">Telescope FOV Simulator</h2>
                     </div>
                     <div class="text-xs text-gray-400 flex items-center gap-3">
-                        <span>FOV: <strong id="fovSpecLabel" class="text-white">3.00° x 1.70°</strong></span>
-                        <span>Scale: <strong id="scaleLabel" class="text-white">100%</strong></span>
+                        <span>FOV: <strong id="fovSpecLabel" class="text-white">2.95° x 1.66°</strong></span>
                     </div>
                 </div>
 
@@ -638,7 +648,7 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
                             <tr>
                                 <th class="p-2">Satellite</th>
                                 <th class="p-2">Time</th>
-                                <th class="p-2">Max Alt</th>
+                                <th class="p-2">Sat Alt</th>
                                 <th class="p-2">Category</th>
                             </tr>
                         </thead>
@@ -712,30 +722,145 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
             </div>
 
             <div class="space-y-3 text-xs text-gray-300 leading-relaxed">
-                <div class="p-3 bg-astroBg rounded-xl border border-astroBorder">
-                    <h4 class="font-bold text-astroCyan text-sm mb-1">1. Top Control Bar</h4>
-                    <p>Use the <strong>📍 Use GPS</strong> button to retrieve location coordinates (falls back to Minneapolis, MN). Select your exact smart telescope (Dwarf 3, Seestar S50/S30, Vespera, Stellina, Hestia, eVscope, Odyssey) or input custom FOV degrees. Pick any Messier target (M1–M110) to scale the reticle.</p>
+                <div class="sticky top-0 bg-astroCard py-1 z-10">
+                    <select id="guideJump" class="w-full bg-astroBg border border-astroBorder rounded px-2 py-1 text-white focus:border-astroCyan outline-none">
+                        <option value="">Jump to a section…</option>
+<option value="guide-1">1. Quick start</option>
+<option value="guide-2">2. Setting up your night</option>
+<option value="guide-3">3. Satellite data and the status line</option>
+<option value="guide-4">4. Telescope FOV Simulator</option>
+<option value="guide-5">5. Timeline, Snap Here and Reset</option>
+<option value="guide-6">6. Sub-Exposure Frame Analyzer</option>
+<option value="guide-7">7. Predicted Passes and the info panel</option>
+<option value="guide-8">8. Using it at the telescope</option>
+<option value="guide-9">9. How accurate is it?</option>
+<option value="guide-10">10. Troubleshooting</option>
+                    </select>
                 </div>
-
-                <div class="p-3 bg-astroBg rounded-xl border border-astroBorder">
-                    <h4 class="font-bold text-astroCyan text-sm mb-1">2. Telescope FOV Simulator</h4>
-                    <p>Displays exact angular tick marks along horizontal/vertical axes. Trails are rendered with Liang-Barsky line vector clipping:</p>
-                    <ul class="list-disc list-inside mt-1 space-y-0.5">
-                        <li><strong class="text-astroRed">Vivid Red:</strong> Intersects central target reticle ellipse.</li>
-                        <li><strong class="text-astroOrange">Bright Orange:</strong> Crosses telescope FOV boundary.</li>
-                        <li><strong class="text-astroPurple">Electric Purple:</strong> Near miss within 1° of frame.</li>
-                    </ul>
-                </div>
-
-                <div class="p-3 bg-astroBg rounded-xl border border-astroBorder">
-                    <h4 class="font-bold text-astroCyan text-sm mb-1">3. Full Night Timeline Slider</h4>
-                    <p>Drag the center of the cyan session window to slide across the night. Drag the left/right handles (║) to lengthen or shorten imaging duration. Ticks are set to <code>pointer-events: none</code> so dragging is completely smooth.</p>
-                </div>
-
-                <div class="p-3 bg-astroBg rounded-xl border border-astroBorder">
-                    <h4 class="font-bold text-astroCyan text-sm mb-1">4. Sub-Exposure Efficiency Analyzer</h4>
-                    <p>Calculates exact clean vs corrupted sub-frame count based on selected exposure time (10s–300s) and identifies the <strong>Longest Satellite-Free Stretch</strong> with a single-click "Snap Here" button.</p>
-                </div>
+<div id="guide-1" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">1. Quick start</h4>
+<div class="space-y-3">
+<p>For the night you choose, this app predicts every <strong>sunlit satellite</strong> that passes near your target, draws where each trail falls in your telescope's field of view, and estimates how many of your exposures they would spoil. Use it to pick a target and a time window with the fewest trails.</p>
+<ul class="list-disc list-inside space-y-0.5">
+<li>Set your <strong>Location</strong>, <strong>Imaging Night</strong>, <strong>Telescope</strong> and <strong>Target</strong> at the top.</li>
+<li>Watch the status line under the FOV display. The first time, it downloads satellite data, then calculates (a progress bar shows how far along it is).</li>
+<li>Look at the <strong>Telescope FOV Simulator</strong>: the trails shown are the ones that cross during your imaging window.</li>
+<li>Drag the cyan <strong>Imaging Window</strong> on the timeline to try other times. Everything updates instantly.</li>
+<li>Tap <strong>Snap Here</strong> to jump to the longest trail-free stretch.</li>
+<li>Choose a <strong>Sub Length</strong> to see how many frames would be clean. Tap any row in the passes list for details.</li>
+</ul></div>
+</div>
+<div id="guide-2" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">2. Setting up your night</h4>
+<div class="space-y-3">
+<p><strong>Location.</strong> Type latitude and longitude in degrees. Latitude is positive north, negative south. <strong>Longitude is negative for west</strong> (Minneapolis is about 44.98, −93.27). <strong>Use GPS</strong> asks your phone for its position. If your phone blocks location access or can't get a fix, a message appears under the FOV display and your coordinates stay as they were. A latitude outside −90 to 90, a longitude outside −180 to 180, or anything that is not a number is rejected, and the box goes back to its previous value. Changing the location recalculates everything.</p>
+<p><strong>Imaging Night.</strong> Pick the date of the evening you will start. The night runs from that evening to the next morning. The default is tonight (before 6 AM it means last evening). <strong>Sunset</strong> and <strong>Sunrise</strong> are calculated for your location and date. All times in the app use your phone's time zone, so if you plan a night somewhere in another zone, convert accordingly.</p>
+<p><strong>Telescope Preset.</strong> Choose your telescope to set the size of the frame (shown in the FOV header). The sizes are the manufacturers' published fields of view, rounded. If yours differs (a different camera or adapter, for example), choose <strong>Custom</strong> and type the width and height in degrees. Changing the telescope only redraws the display, so it is instant.</p>
+<p><strong>Target Catalog.</strong> Pick any Messier object (M1 to M110). The badge shows its size in arcminutes. The <strong>Alt / Az</strong> readout is where the target is in your sky at the <em>start of your imaging window</em>, so it changes as you move the window. Predictions are aimed at the target's real position and follow it as it moves, as a tracking telescope would. If the target is below the horizon at the window start, a warning appears under the display.</p></div>
+</div>
+<div id="guide-3" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">3. Satellite data and the status line</h4>
+<div class="space-y-3">
+<p>Orbits come from CelesTrak's list of active satellites (about 15,000, mostly Starlink). The list is saved on your phone and every calculation runs on your phone. Nothing about your location is sent anywhere.</p>
+<ul class="list-disc list-inside space-y-0.5">
+<li><strong>Computing satellite passes…</strong> a recalculation is running. Changing the location, date, target, or loading new data triggers one. Changing the telescope, sub length or window does not.</li>
+<li><strong>Satellite data from … N satellites. K trails near the target tonight.</strong> Ready. K counts every sunlit trail that came within about 4.5° of the target during the whole night. The ones that reach the area shown in the FOV display become passes.</li>
+<li><strong>Update data</strong> re-downloads the list. The app also refreshes it by itself when the saved copy is more than 12 hours old. If the copy is under 2 hours old it just says it is already up to date.</li>
+<li><strong>Load file</strong> loads a satellite list (TLE text file) from your device, for when downloading is blocked. You can get one from CelesTrak on another connection.</li>
+<li>CelesTrak allows only about one download of the list per internet connection every 2 hours. If another device on your Wi-Fi fetched it recently, you get a "CelesTrak refused" message. Wait, switch to mobile data, or use Load file.</li>
+<li>Orbit data goes stale. It is most accurate within a few days of its date. If your night is more than about 4 days from the data, the status line warns you.</li>
+</ul></div>
+</div>
+<div id="guide-4" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">4. Telescope FOV Simulator</h4>
+<div class="space-y-3">
+<p>This shows the sky around your target. The <strong>light grey rectangle</strong> is your telescope's frame. The darker border around it adds 1° of extra sky so you can see near misses. The <strong>dotted cyan oval</strong> is the target's catalog size and the <strong>crosshair</strong> in the middle is where the telescope points.</p>
+<p><strong>Scales.</strong> The bottom scale is <strong>azimuth</strong> and the left scale is <strong>altitude</strong>, both centered on the target at the start of your window. Up means toward the zenith and right means increasing azimuth. (Azimuth degrees are stretched at high altitude, as on the real sky.) Fewer labels show on narrow screens.</p>
+<p><strong>Trails.</strong> Each line is a satellite path during your imaging window. The arrowhead shows the direction of travel and the label gives the name and local time. Because only sunlit satellites are shown, a trail can start or stop part-way across when the satellite enters or leaves Earth's shadow.</p>
+<ul class="list-disc list-inside space-y-0.5">
+<li><strong class="text-astroRed">Red, Through Target:</strong> passes close to the center of the frame, within about a third of the way from the center to the nearest edge (about 0.3° for the Dwarf 3). It crosses the target area and ruins frames.</li>
+<li><strong class="text-astroOrange">Orange, Across Frame:</strong> crosses the frame but not close to the center. It also ruins frames.</li>
+<li><strong class="text-astroPurple">Purple, Near Miss:</strong> stays outside the frame but within 1° of it. It does not touch your frames and is not counted.</li>
+</ul>
+<p>The three <strong>Trail Filters</strong> buttons show or hide each color on the display. This only changes what you see, not the counts or the analysis. The badge in the corner counts the passes in your window. The <strong>Reticle Center</strong> box gives the target's altitude and azimuth at the window start.</p></div>
+</div>
+<div id="guide-5" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">5. Timeline, Snap Here and Reset</h4>
+<div class="space-y-3">
+<p>The bar covers the dark part of your night: from <strong>astronomical dusk to dawn</strong> (sun 18° below the horizon). Where the sky never gets that dark (summer, far north or south) it uses nautical or civil twilight, or sunset to sunrise, and a note under the display says so.</p>
+<p>The colored lines on the bar are <strong>every satellite trail near the target all night</strong>, using the same colors as above. Dense areas are busy times, and clear areas are quiet. Satellites are mostly sunlit only soon after dusk and before dawn, so expect the middle of the night to be quiet.</p>
+<ul class="list-disc list-inside space-y-0.5">
+<li><strong>Move</strong> the cyan Imaging Window by dragging its middle. <strong>Resize</strong> it by dragging the ║ handles (minimum 10 minutes). Tap an empty spot on the bar to center the window there. The start, end and length show above the bar.</li>
+<li><strong>Longest Satellite-Free Stretch</strong> is the longest stretch with no red or orange trail <em>and</em> the target at least 30° above the horizon. Purple near misses do not break it. <strong>Snap Here</strong> sets your window to it. If no such stretch exists, it says "None".</li>
+<li><strong>Reset</strong> returns the window to 21:00 for 2 hours, or the nearest allowed time if 21:00 is outside the dark part of your night.</li>
+</ul></div>
+</div>
+<div id="guide-6" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">6. Sub-Exposure Frame Analyzer</h4>
+<div class="space-y-3">
+<p>Choose the length of each exposure with <strong>Sub Length</strong> (10 seconds to 5 minutes).</p>
+<ul class="list-disc list-inside space-y-0.5">
+<li><strong>Total Frames</strong> = your window length divided by the sub length (rounded down).</li>
+<li><strong>Corrupted</strong> = frames hit by a red or orange trail. Each such trail counts as the time it spends in the frame divided by the sub length (rounded up), and at least one frame. Purple trails are not counted.</li>
+<li><strong class="text-astroGreen">Clean Frames</strong> = total minus corrupted. <strong>Net Integration Efficiency</strong> = clean ÷ total, shown by the green and red bar.</li>
+<li><strong>Clean Integration</strong> = clean frames × sub length. <strong>Lost Time</strong> = corrupted frames × sub length, in whole minutes.</li>
+</ul>
+<p>Keep in mind: "corrupted" is not always "unusable", because stacking software can often reject or repair a satellite trail. The count assumes each short trail spoils one frame, but a trail that lands on the boundary between two frames can spoil two. The app also does not know how bright each satellite is, so it counts every sunlit one, including faint ones that may not show up in a short exposure. The results lean pessimistic.</p></div>
+</div>
+<div id="guide-7" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">7. Predicted Passes and the info panel</h4>
+<div class="space-y-3">
+<p>The list shows every pass in your <strong>current window</strong>, earliest first. <strong>Time</strong> is when the satellite enters the frame (red and orange) or its closest approach (purple), in local 24-hour time. <strong>Sat Alt</strong> is the <em>satellite's</em> height above your horizon near the target, not the target's. <strong>Category</strong> uses the colors above.</p>
+<p><strong>Tap a row</strong> to select it. The row highlights, its trail on the display turns <strong>dotted</strong>, and an info panel opens at the bottom of the screen with:</p>
+<ul class="list-disc list-inside space-y-0.5">
+<li>The satellite's name and <strong>NORAD ID</strong> (use it to look the satellite up elsewhere).</li>
+<li>Orbital altitude, speed and inclination.</li>
+<li>Visual magnitude, which shows "Not estimated" because brightness is not calculated.</li>
+<li>Closest approach to the center of the frame (degrees) and how fast it moves across the sky (degrees per second).</li>
+</ul>
+<p><strong>Tap the same row again</strong> (or the ✕ or Close button) to deselect and return the trail to solid. The selection also clears if you change the window so the pass leaves it, or change the location, date, target or telescope. If you hide a color with the filters, a selected trail of that color will not show.</p></div>
+</div>
+<div id="guide-8" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">8. Using it at the telescope</h4>
+<div class="space-y-3">
+<ul class="list-disc list-inside space-y-0.5">
+<li><strong>Add to Home Screen:</strong> in Safari tap Share, then Add to Home Screen. It then opens full screen like an app.</li>
+<li><strong>Works offline:</strong> after one visit with a connection, the app and the satellite data are saved on your phone. Without signal it still opens and calculates. Phone GPS usually works without signal, or you can type your coordinates.</li>
+<li><strong>Before a trip:</strong> open the app once while online so the data is fresh, and run through your target and date.</li>
+<li><strong>After the app is updated</strong> on GitHub, open it twice. The first open shows the saved version and fetches the new one, and the second shows the new one.</li>
+<li>If Safari goes about a week without the app being opened, it may clear saved data. Using the Home Screen icon avoids this.</li>
+</ul></div>
+</div>
+<div id="guide-9" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">9. How accurate is it?</h4>
+<div class="space-y-3">
+<p><strong>Calculated from real data:</strong> satellite positions (the standard SGP4 orbit model using CelesTrak's current orbit data), the target's real position in your sky (corrected for the slow drift of the sky's coordinates), sunset, sunrise and twilight times (within about a minute), and whether each satellite is in sunlight (Earth's shadow, simple model).</p>
+<p><strong>What that means in practice:</strong> with fresh data, satellite positions are good to a few kilometers, which is a fraction of a degree on the sky. A trail that grazes the edge of your frame can flip between Orange and Purple, and Starlink maneuvers can shift individual satellites. The orbit math was tested against published reference values and a brute-force search, but not against live observations. Spot-check a pass against another tracker such as Heavens-Above or Stellarium. Small differences are normal.</p>
+<p><strong>Not modeled:</strong></p>
+<ul class="list-disc list-inside space-y-0.5">
+<li>Brightness: every sunlit satellite counts, bright or faint.</li>
+<li>High-orbit satellites (orbits over about 225 minutes, such as GPS or geostationary) are skipped, as they do not make trails.</li>
+<li>Aircraft, meteors, planets, and satellites missing from the list (very new launches, some military objects).</li>
+<li>Atmospheric refraction, which matters below about 10° altitude.</li>
+<li>Field rotation: the frame is drawn with up toward the zenith, as on an alt-az telescope such as the Dwarf or Seestar. An equatorial mount would rotate it.</li>
+<li>Targets other than Messier objects, and non-standard setups (use Custom for a different field of view).</li>
+</ul></div>
+</div>
+<div id="guide-10" class="p-3 bg-astroBg rounded-xl border border-astroBorder">
+<h4 class="font-bold text-astroCyan text-sm mb-1">10. Troubleshooting</h4>
+<div class="space-y-3">
+<ul class="list-disc list-inside space-y-0.5">
+<li><strong>"CelesTrak refused the download (HTTP 403)":</strong> the 2-hour download limit. Wait, use mobile data, or Load file.</li>
+<li><strong>"Could not download satellite data":</strong> no connection and no saved copy yet. Connect once and tap Update data.</li>
+<li><strong>"(could not refresh, using saved copy)":</strong> the refresh failed, so the saved data is being used. That is fine, but the data is older.</li>
+<li><strong>"(could not save a copy on this device)":</strong> your browser would not store the data (private browsing or full storage). The app will download again each time.</li>
+<li><strong>"The target is below the horizon…":</strong> pick a later window or another target.</li>
+<li><strong>"None with the target above 30°":</strong> no clean stretch exists tonight with the target that high. Try another target or date.</li>
+<li><strong>Few or no trails:</strong> often normal. Satellites are in shadow for most of the dark middle of the night, and a target that is low or below the horizon cannot have trails.</li>
+<li><strong>"Could not get your location":</strong> location access is blocked for the page or there was no GPS fix. Your coordinates were left unchanged. Allow location access in your phone's settings for Safari, or type your coordinates.</li>
+<li><strong>Numbers disagree with another tracker:</strong> check the data date, your time zone and whether faint satellites are being counted.</li>
+</ul></div>
+</div>
             </div>
 
             <button id="closeGuideBtn2" class="w-full py-2 bg-astroCyan text-black font-bold rounded-xl text-xs hover:bg-cyan-400 transition">
@@ -1190,19 +1315,19 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
 
         // Smart Telescope Optics FOV Presets (Width x Height in Degrees)
         const TELESCOPE_PRESETS = {
-            dwarf3: { widthDeg: 3.00, heightDeg: 1.70, name: "DWARFLAB Dwarf 3" },
-            dwarf2: { widthDeg: 3.10, heightDeg: 1.70, name: "DWARFLAB Dwarf II" },
+            dwarf3: { widthDeg: 2.95, heightDeg: 1.66, name: "DWARFLAB Dwarf 3" },
+            dwarf2: { widthDeg: 3.20, heightDeg: 1.80, name: "DWARFLAB Dwarf II" },
             seestar_s50: { widthDeg: 1.29, heightDeg: 0.73, name: "ZWO Seestar S50" },
             seestar_s30: { widthDeg: 2.15, heightDeg: 1.21, name: "ZWO Seestar S30" },
             vespera2: { widthDeg: 2.50, heightDeg: 1.40, name: "Vaonis Vespera II" },
-            vespera_pro: { widthDeg: 1.80, heightDeg: 1.80, name: "Vaonis Vespera Pro" },
+            vespera_pro: { widthDeg: 1.60, heightDeg: 1.60, name: "Vaonis Vespera Pro" },
             vespera_classic: { widthDeg: 1.60, heightDeg: 0.90, name: "Vaonis Vespera Classic" },
             stellina: { widthDeg: 1.00, heightDeg: 0.70, name: "Vaonis Stellina" },
             hestia: { widthDeg: 1.80, heightDeg: 1.80, name: "Vaonis Hestia" },
-            evscope2: { widthDeg: 0.57, heightDeg: 0.76, name: "Unistellar eVscope 2" },
-            equinox2: { widthDeg: 0.57, heightDeg: 0.76, name: "Unistellar eQuinox 2" },
-            odyssey: { widthDeg: 0.56, heightDeg: 0.75, name: "Unistellar Odyssey" },
-            odyssey_pro: { widthDeg: 0.56, heightDeg: 0.75, name: "Unistellar Odyssey Pro" }
+            evscope2: { widthDeg: 0.57, heightDeg: 0.78, name: "Unistellar eVscope 2" },
+            equinox2: { widthDeg: 0.57, heightDeg: 0.78, name: "Unistellar eQuinox 2" },
+            odyssey: { widthDeg: 0.57, heightDeg: 0.76, name: "Unistellar Odyssey" },
+            odyssey_pro: { widthDeg: 0.57, heightDeg: 0.76, name: "Unistellar Odyssey Pro" }
         };
 
         // Core State
@@ -1211,8 +1336,8 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
             lng: -93.2650,
             dateStr: (() => { const n = new Date(Date.now() - 6 * 3600 * 1000); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0'); })(),
             telescopeKey: 'dwarf3',
-            fovW: 3.00, // degrees
-            fovH: 1.70, // degrees
+            fovW: 2.95, // degrees
+            fovH: 1.66, // degrees
             targetKey: 'M31',
             sessionStartMins: 1260, // 21:00 (minutes from midnight 0..1440)
             sessionDurationMins: 120, // 2 hours
@@ -1585,7 +1710,7 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
             const cosAlt = Math.max(0.05, Math.cos(scaleTarget.alt * Math.PI / 180));
 
             // Horizontal Az Axis Ticks (azimuth, centered on target)
-            const numTicksX = 5;
+            const numTicksX = Math.max(2, Math.min(5, Math.floor(viewW / 56)));
             for (let i = 0; i <= numTicksX; i++) {
                 const fraction = i / numTicksX;
                 const degVal = - (viewDegW / 2) + fraction * viewDegW;
@@ -1954,44 +2079,58 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
         }
 
         // Find Longest Satellite Free Window in whole night
+        // The longest clean stretch only counts times when the target is at least this high above the horizon
+        const MIN_TARGET_ALT_DEG = 30;
+        let altCurveCache = { key: '', arr: null };
+        function targetAltCurve() {
+            const key = [appState.lat, appState.lng, appState.dateStr, appState.targetKey, appState.nightStartMins, appState.nightEndMins].join('|');
+            if (altCurveCache.key === key) return altCurveCache.arr;
+            const pos = MESSIER_POS[appState.targetKey], mid = nightMidnightMs();
+            const n = appState.nightEndMins - appState.nightStartMins + 1, arr = new Float32Array(n);
+            for (let k = 0; k < n; k++) arr[k] = targetAltAz(appState.lat, appState.lng, mid + (appState.nightStartMins + k) * 60000, pos.raH, pos.decD).alt;
+            altCurveCache = { key, arr };
+            return arr;
+        }
+
+        // Find Longest Satellite Free Window in whole night (target above the minimum altitude, no trails across the frame)
         function findLongestCleanStretch() {
             const nightStartMins = appState.nightStartMins;
             const nightEndMins = appState.nightEndMins;
+            const alt = targetAltCurve();
 
-            const framePasses = appState.satellitePasses.filter(p => p.category === 'red' || p.category === 'orange');
-
-            let bestStart = nightStartMins;
-            let bestEnd = nightEndMins;
-            let maxGap = 0;
-
-            let currentStart = nightStartMins;
-
-            framePasses.forEach(pass => {
-                const gap = pass.timeMins - currentStart;
-                if (gap > maxGap) {
-                    maxGap = gap;
-                    bestStart = currentStart;
-                    bestEnd = pass.timeMins;
-                }
-                currentStart = Math.max(currentStart, pass.timeMins + (pass.durationSecs / 60));
-            });
-
-            const finalGap = nightEndMins - currentStart;
-            if (finalGap > maxGap) {
-                maxGap = finalGap;
-                bestStart = currentStart;
-                bestEnd = nightEndMins;
+            // Times that cannot be used: target too low, or a satellite crossing the frame
+            const blocked = [];
+            let low0 = null;
+            for (let k = 0; k < alt.length; k++) {
+                const m = nightStartMins + k, low = alt[k] < MIN_TARGET_ALT_DEG;
+                if (low && low0 === null) low0 = m;
+                if (!low && low0 !== null) { blocked.push([low0, m]); low0 = null; }
             }
+            if (low0 !== null) blocked.push([low0, nightEndMins]);
+            appState.satellitePasses.forEach(p => {
+                if (p.category === 'red' || p.category === 'orange') blocked.push([p.timeMins, p.timeMins + p.durationSecs / 60]);
+            });
+            blocked.sort((a, b) => a[0] - b[0]);
 
-            const gapMins = Math.floor(maxGap);
-            const startStr = formatMinsToHHMM(bestStart);
-            const endStr = formatMinsToHHMM(bestEnd);
+            let bestStart = null, bestEnd = null, maxGap = 0, cur = nightStartMins;
+            blocked.forEach(b => {
+                if (b[0] - cur > maxGap) { maxGap = b[0] - cur; bestStart = cur; bestEnd = b[0]; }
+                cur = Math.max(cur, b[1]);
+            });
+            if (nightEndMins - cur > maxGap) { maxGap = nightEndMins - cur; bestStart = cur; bestEnd = nightEndMins; }
 
-            document.getElementById('cleanStretchLabel').innerText = `${startStr} – ${endStr} (${gapMins} mins clean)`;
+            const label = document.getElementById('cleanStretchLabel');
+            if (bestStart === null || maxGap < 1) {
+                bestStart = null;
+                label.innerText = `None with the target above ${MIN_TARGET_ALT_DEG}°`;
+            } else {
+                label.innerText = `${formatMinsToHHMM(bestStart)} – ${formatMinsToHHMM(bestEnd)} (${Math.floor(maxGap)} mins clean)\n(target above ${MIN_TARGET_ALT_DEG}° only)`;
+            }
 
             // Attach Snap Here Button Listener
             const snapBtn = document.getElementById('snapStretchBtn');
             snapBtn.onclick = () => {
+                if (bestStart === null) return;
                 const snapStart = Math.ceil(bestStart);
                 const snapEnd = Math.floor(bestEnd - 0.001);
                 appState.sessionStartMins = snapStart;
@@ -2033,7 +2172,7 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
                         ${pass.name}
                     </td>
                     <td class="p-2 text-gray-300">${pass.timeStr}</td>
-                    <td class="p-2 text-astroCyan">${pass.maxAltDeg}° Alt</td>
+                    <td class="p-2 text-astroCyan">${pass.maxAltDeg}°</td>
                     <td class="p-2">
                         <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${badgeColor}">
                             ${catLabel}
@@ -2150,37 +2289,46 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
 
             // GPS Geolocation Button Handler
             document.getElementById('gpsBtn').onclick = () => {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                            appState.lat = parseFloat(pos.coords.latitude.toFixed(4));
-                            appState.lng = parseFloat(pos.coords.longitude.toFixed(4));
-                            document.getElementById('latInput').value = appState.lat;
-                            document.getElementById('lngInput').value = appState.lng;
-                            generateSatellitePasses();
-                            updateAllViews();
-                        },
-                        (err) => {
-                            // Fallback to Minneapolis, MN
-                            appState.lat = 44.9778;
-                            appState.lng = -93.2650;
-                            document.getElementById('latInput').value = appState.lat;
-                            document.getElementById('lngInput').value = appState.lng;
-                            generateSatellitePasses();
-                            updateAllViews();
-                        }
-                    );
+                if (!navigator.geolocation) {
+                    setSatStatus('This browser cannot provide your location. Type your latitude and longitude instead.', null);
+                    return;
                 }
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        appState.lat = parseFloat(pos.coords.latitude.toFixed(4));
+                        appState.lng = parseFloat(pos.coords.longitude.toFixed(4));
+                        document.getElementById('latInput').value = appState.lat;
+                        document.getElementById('lngInput').value = appState.lng;
+                        generateSatellitePasses();
+                        updateAllViews();
+                    },
+                    (err) => {
+                        setSatStatus('Could not get your location (' + (err && err.code === 1 ? 'location access is blocked for this page' : 'no position available') + '). Your coordinates were not changed. Type them in, or allow location access and try again.', null);
+                    },
+                    { timeout: 20000 }
+                );
             };
 
-            // Lat/Lng Manual Inputs
+            // Lat/Lng Manual Inputs (invalid values are rejected instead of silently replaced)
             document.getElementById('latInput').onchange = (e) => {
-                appState.lat = parseFloat(e.target.value) || 44.9778;
+                const v = parseFloat(e.target.value);
+                if (!isFinite(v) || v < -90 || v > 90) {
+                    e.target.value = appState.lat;
+                    setSatStatus('Latitude must be a number from -90 to 90, so it was left at ' + appState.lat + '.', null);
+                    return;
+                }
+                appState.lat = v;
                 generateSatellitePasses();
                 updateAllViews();
             };
             document.getElementById('lngInput').onchange = (e) => {
-                appState.lng = parseFloat(e.target.value) || -93.2650;
+                const v = parseFloat(e.target.value);
+                if (!isFinite(v) || v < -180 || v > 180) {
+                    e.target.value = appState.lng;
+                    setSatStatus('Longitude must be a number from -180 to 180 (negative = west), so it was left at ' + appState.lng + '.', null);
+                    return;
+                }
+                appState.lng = v;
                 generateSatellitePasses();
                 updateAllViews();
             };
@@ -2271,6 +2419,11 @@ img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:midd
             document.getElementById('guideBtn').onclick = () => guideModal.classList.remove('hidden');
             document.getElementById('closeGuideModal').onclick = () => guideModal.classList.add('hidden');
             document.getElementById('closeGuideBtn2').onclick = () => guideModal.classList.add('hidden');
+            document.getElementById('guideJump').onchange = (e) => {
+                const el = e.target.value ? document.getElementById(e.target.value) : null;
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                e.target.value = '';
+            };
 
             // Reset Button
             document.getElementById('resetSessionBtn').onclick = () => {
